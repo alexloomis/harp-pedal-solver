@@ -1,48 +1,68 @@
 // #![allow(dead_code)]
 #![warn(clippy::needless_pass_by_value)]
 
-use harp_pedal_solver::assign::*;
 use harp_pedal_solver::base::*;
-use harp_pedal_solver::transition::*;
+use harp_pedal_solver::parse::*;
+// use harp_pedal_solver::shift::*;
+use harp_pedal_solver::solve::*;
 use std::time::Instant;
 
+#[allow(dead_code)]
+const AQUARIUM: &str = "^^^|^^-^
+   A C Eb
+    F
+    Bb Db G |
+    Eb 
+    Ab B F
+    Db
+    A Eb Gb |
+    D
+    D E G
+    A
+    B D F |
+    Bb
+    A C Eb
+    A
+    ~^^|^~~^
+";
+
+#[allow(dead_code)]
+const FIREMUSIC: &str =
+    "$pedal diagram symbols: ^ flat, - natural, v sharp, ~ no preference
+^-^|^-^^
+        Ab C Eb
+        Cb Eb Gb
+        D F Bb
+        Eb G C A |
+        Ab Fb Cb
+        G Eb Bb
+        Gb Eb A Bb
+        F D Ab C |
+        G E C
+        G Eb Bb
+        Gb D A
+        Fb Db Bb G |
+        Ab C Eb
+        Eb Cb Gb
+        Bb F D
+        D# Gb A C |
+        E G# B
+        vv-|-vv-
+        ";
+
+// Currently silently sets impossible measure to ~~~|~~~~
+#[allow(dead_code)]
+const IMPOSSIBLE_CHORD: &str = "C
+   G G# A
+   C
+";
+
 fn main() {
+    let parsed = parse(FIREMUSIC);
+    println!("Input:\n{parsed:?}\n");
     let now = Instant::now();
-    let initial_state = notes_to_harp(
-        &vec!["Ab", "Bb", "Cb", "Db", "Eb", "Fb", "G"]
-            .iter()
-            .map(|n| read_note(n))
-            .collect::<Vec<Note>>(),
-    );
-    let end_state = notes_to_harp(
-        &vec!["Ab", "Bb", "Cb", "Eb"]
-            .iter()
-            .map(|n| read_note(n))
-            .collect::<Vec<Note>>(),
-    );
-    let music: Vec<Vec<PitchClass>> = vec![
-        vec!["A", "C", "Eb"],
-        vec!["F"],
-        vec!["Bb", "Db", "G"],
-        vec!["Eb"],
-        vec!["Ab", "B", "F"],
-        vec!["Db"],
-        vec!["A", "Eb", "Gb"],
-        vec!["D"],
-        vec!["D", "E", "G"],
-        vec!["A"],
-        vec!["B", "D", "F"],
-        vec!["Bb"],
-        vec!["A", "C", "Eb"],
-        vec!["A"],
-    ]
-    .iter()
-    .map(|m| m.iter().map(|n| note_to_pc(read_note(n))).collect())
-    .collect();
-    let medial_states =
-        music.iter().map(|p| assign(p)).collect::<Vec<Vec<Harp>>>();
     // paths: Vec<Vec<Harp>>
-    let (paths, score) = find_paths(initial_state, &medial_states, end_state);
+    let (paths, score) = solve(&parsed);
     let pretty: Vec<Vec<Vec<Note>>> = paths
         .iter()
         .map(|v| unset_seen(v).iter().map(|h| harp_to_notes(*h)).collect())
@@ -55,3 +75,18 @@ fn main() {
     println!("Found {p_len} ways with a cost of {score}.\n");
     println!("Elapsed time: {:.2?}", now.elapsed());
 }
+
+// fn main() {
+//     let music: Vec<Vec<Note>> = vec![vec!["F", "G"], vec!["A"], vec!["Gb"]]
+//         .iter()
+//         .map(|v| v.iter().map(|n| read_note(n)).collect())
+//         .collect();
+//     let pedals: Vec<Vec<Note>> = vec![vec![], vec!["A"], vec!["F"]]
+//         .iter()
+//         .map(|v| v.iter().map(|n| read_note(n)).collect())
+//         .collect();
+//     let input: Vec<(Vec<Note>, Vec<Note>)> =
+//         music.into_iter().zip(pedals).collect();
+//     let shifted = change_builder(&input, &[]);
+//     println!("{:?}", unravel_paths(shifted));
+// }

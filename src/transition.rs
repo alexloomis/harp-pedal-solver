@@ -17,15 +17,17 @@ where
 }
 
 // What is the cost for each pedal change?
-const PEDAL_COST: usize = 10;
+const PEDAL_COST: usize = 100;
 // How much do we penalize simultaneous pedal changes on the same foot?
-const DOUBLE_CHANGE_COST: usize = 5;
-// How much do we penalize doubled notes (eg E# and F)?
-#[allow(dead_code)]
-const DOUBLE_NOTE_COST: usize = 3;
+const DOUBLE_CHANGE_COST: usize = 40;
+// How much do we penalize doubled strings (eg E# and F)?
+const DOUBLE_STRING_COST: usize = 10;
 // How much do we penalize crossed strings (eg E# and Fb)?
+const CROSS_STRING_COST: usize = 120;
+// How much do we penalize each beat that
+// a string is different than the key signature?
 #[allow(dead_code)]
-const CROSS_STRING_COST: usize = 12;
+const OUT_OF_KEY: usize = 0;
 
 fn cost(start: Harp, finish: Harp) -> usize {
     let mut out = 0;
@@ -38,10 +40,7 @@ fn cost(start: Harp, finish: Harp) -> usize {
     if r_count > 1 {
         out += DOUBLE_CHANGE_COST * (r_count - 1);
     }
-    // Calculating num_same is slow.
-    if DOUBLE_NOTE_COST != 0 {
-        out += DOUBLE_NOTE_COST * num_same(finish);
-    }
+    out += DOUBLE_STRING_COST * num_same(finish);
     out += CROSS_STRING_COST * num_crossed(finish);
     out
 }

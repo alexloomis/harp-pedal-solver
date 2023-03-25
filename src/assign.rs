@@ -42,7 +42,7 @@ fn grow_children(
     }
 }
 
-// If we expect grandchildren but don't have any, kill barren children.
+// If we expect grandchildren, kill barren children.
 fn kill_barren_children(forest: &mut Forest<Note>) {
     for mut branch in forest.iter_mut() {
         if branch.has_no_child() {

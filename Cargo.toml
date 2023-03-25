@@ -12,3 +12,4 @@ enum-iterator = "1.4.0"
 pathfinding = "4.2.1"
 clap = { version = "4.1.11", features = ["derive"] }
 itertools = "0.10.5"
+nom = "7.1.3"

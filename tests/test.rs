@@ -1,4 +1,6 @@
 use harp_pedal_solver::assign::*;
+use harp_pedal_solver::base::*;
+use harp_pedal_solver::shift::*;
 use harp_pedal_solver::util::*;
 use trees::*;
 
@@ -28,22 +30,73 @@ fn cant_assign() {
     assert!(!can_assign(&[11, 0, 1]));
 }
 
-// #[test]
-// fn can_assign_1() {
-//     assert!(can_assign(&[1, 2, 4, 5, 7, 9, 11]));
-// }
-//
-// #[test]
-// fn can_assign_2() {
-//     assert!(can_assign(&[0, 3, 5, 6, 7, 9, 10]));
-// }
-//
-// #[test]
-// fn can_assign_3() {
-//     assert!(!can_assign(&[0, 1, 3, 5, 6, 7, 9, 10]));
-// }
-
 #[test]
 fn correct_num_assignations() {
     assert_eq!(10, assign(&[0, 3, 5, 7, 9]).len());
+}
+
+#[test]
+fn chain_pushes_correctly() {
+    let music: Vec<Vec<Note>> = vec![vec!["F", "G"], vec!["A"], vec!["Gb"]]
+        .iter()
+        .map(|v| v.iter().map(|n| read_note(n)).collect())
+        .collect();
+    let pedals: Vec<Vec<Note>> = vec![vec!["F", "G"], vec!["A"], vec![]]
+        .iter()
+        .map(|v| v.iter().map(|n| read_note(n)).collect())
+        .collect();
+    let input: Vec<(Vec<Note>, Vec<Note>)> =
+        music.into_iter().zip(pedals).collect();
+    let shifted = unravel_paths(change_builder(&input, &[]));
+    assert_eq!(3, shifted.len());
+}
+
+#[test]
+fn abandon_when_too_many() {
+    let music: Vec<Vec<Note>> = vec![vec!["F", "G"], vec!["A"], vec!["Gb"]]
+        .iter()
+        .map(|v| v.iter().map(|n| read_note(n)).collect())
+        .collect();
+    let pedals: Vec<Vec<Note>> = vec![vec!["F", "G"], vec!["A"], vec!["C"]]
+        .iter()
+        .map(|v| v.iter().map(|n| read_note(n)).collect())
+        .collect();
+    let input: Vec<(Vec<Note>, Vec<Note>)> =
+        music.into_iter().zip(pedals).collect();
+    let shifted = unravel_paths(change_builder(&input, &[]));
+    assert_eq!(0, shifted.len());
+}
+
+#[test]
+fn abandon_when_impossible() {
+    let music: Vec<Vec<Note>> =
+        vec![vec!["F", "G"], vec!["F#", "G#"], vec!["Gb"]]
+            .iter()
+            .map(|v| v.iter().map(|n| read_note(n)).collect())
+            .collect();
+    let pedals: Vec<Vec<Note>> = vec![vec!["F", "G"], vec![], vec![]]
+        .iter()
+        .map(|v| v.iter().map(|n| read_note(n)).collect())
+        .collect();
+    let input: Vec<(Vec<Note>, Vec<Note>)> =
+        music.into_iter().zip(pedals).collect();
+    let shifted = unravel_paths(change_builder(&input, &[]));
+    assert_eq!(0, shifted.len());
+}
+
+#[test]
+fn can_have_none() {
+    let music: Vec<Vec<Note>> =
+        vec![vec!["F", "G"], vec!["F#", "G#"], vec!["Gb"]]
+            .iter()
+            .map(|v| v.iter().map(|n| read_note(n)).collect())
+            .collect();
+    let pedals: Vec<Vec<Note>> = vec![vec![], vec!["A"], vec!["F"]]
+        .iter()
+        .map(|v| v.iter().map(|n| read_note(n)).collect())
+        .collect();
+    let input: Vec<(Vec<Note>, Vec<Note>)> =
+        music.into_iter().zip(pedals).collect();
+    let shifted = unravel_paths(change_builder(&input, &[]));
+    assert!(shifted[0][2].is_none());
 }

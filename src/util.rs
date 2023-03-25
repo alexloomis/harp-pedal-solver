@@ -23,3 +23,12 @@ pub fn unravel_paths<T: Copy>(forest: Forest<T>) -> Vec<Vec<T>> {
     }
     out
 }
+
+// // If we expect grandchildren, kill barren children.
+// fn kill_barren_children<T>(forest: &mut Forest<T>) {
+//     for mut branch in forest.iter_mut() {
+//         if branch.has_no_child() {
+//             branch.detach();
+//         };
+//     }
+// }
