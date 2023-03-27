@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use crate::assign::assign;
-use crate::base::*;
 use crate::parse::Measure;
+use crate::prelude::*;
 use crate::shift::{num_shifts, shift};
 use crate::transition::find_paths;
 

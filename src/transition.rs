@@ -1,4 +1,4 @@
-use crate::base::{num_crossed, num_same, update_harp, Harp};
+use crate::prelude::{num_crossed, num_same, update_harp, Harp};
 use pathfinding::directed::astar::{astar_bag, AstarSolution};
 
 // How many pedal changes to go between two states?

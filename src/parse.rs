@@ -1,4 +1,4 @@
-use crate::base::{Harp, Modifier, Name, Note};
+use crate::prelude::{Harp, Modifier, Name, Note};
 use itertools::Itertools;
 use nom::{
     character::complete::{

@@ -1,4 +1,4 @@
-use crate::base::*;
+use crate::prelude::*;
 use crate::util::*;
 use trees::{Forest, Tree};
 

@@ -1,6 +1,6 @@
-pub use crate::base::harp::*;
-pub use crate::base::note::*;
-pub use crate::base::pitch_class::*;
+pub use crate::prelude::harp::*;
+pub use crate::prelude::note::*;
+pub use crate::prelude::pitch_class::*;
 
 // The ways of storing notes are
 // Note - a single note suitable for human readability
@@ -114,7 +114,7 @@ pub mod note {
 }
 
 pub mod pitch_class {
-    use crate::base::{read_note, Modifier, Name, Note};
+    use crate::prelude::{read_note, Modifier, Name, Note};
     // 0 is Ab, 1 is A, etc.
     pub type PitchClass = u8;
 
@@ -167,7 +167,7 @@ pub mod pitch_class {
 }
 
 pub mod harp {
-    use crate::base::{note_to_pc, pedal_symbol_opt, Modifier, Name, Note};
+    use crate::prelude::{note_to_pc, pedal_symbol_opt, Modifier, Name, Note};
     use itertools::Itertools;
 
     // Index 0 is D, 1 is C, etc. (see pedal_to_u8)
