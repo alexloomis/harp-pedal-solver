@@ -70,6 +70,7 @@ pub fn change_builder(
         acc_.extend(new_changes);
         // If we owe more changes than we have slots, there are no solutions.
         if acc_.len() > remaining.len() + 1 {
+            println!("killing branch with acc {acc_:?}");
             return forest;
         }
         if acc_.is_empty() {
@@ -94,4 +95,27 @@ pub fn shift(
         vec.push((music[i].clone(), changes[i].clone()));
     }
     unravel_paths(change_builder(&vec, &[]))
+}
+
+fn accumulate(total: usize, acc: usize, new: usize) -> (usize, usize) {
+    let here = usize::from(acc + new > 0);
+    (total + here, acc + new - here)
+}
+
+// How many shifts are needed?
+fn num_shifts_(pedals: &[Vec<Note>]) -> (usize, usize) {
+    pedals
+        .iter()
+        .map(|m| m.len())
+        .fold((0, 0), |(x, y), z| accumulate(x, y, z))
+}
+
+// Returns usize::MAX if shifts not possible.
+pub fn num_shifts(pedals: &[Vec<Note>]) -> usize {
+    let (total, acc) = num_shifts_(pedals);
+    if acc > 0 {
+        usize::MAX
+    } else {
+        total
+    }
 }
