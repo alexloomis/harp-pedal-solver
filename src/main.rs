@@ -1,12 +1,11 @@
 // #![allow(dead_code)]
 #![warn(clippy::needless_pass_by_value)]
 
-use harp_pedal_solver::cli::*;
+use harp_pedal_solver::cli::CLI;
 use harp_pedal_solver::parse::*;
 use harp_pedal_solver::prelude::*;
 use harp_pedal_solver::solve::*;
 // use std::time::Instant;
-use clap::Parser;
 use std::fs;
 
 // Currently silently sets impossible measure to ~~~|~~~~
@@ -16,15 +15,11 @@ const IMPOSSIBLE_CHORD: &str = "C
    C
 ";
 
-#[allow(dead_code)]
-const EASY: &str = "C | C# | D | ";
-
 fn main() {
-    let cli = Cli::parse();
-    let input = fs::read_to_string(cli.file).expect("Unable to read file");
-    let verbose = cli.verbose || cli.debug;
-    let debug = cli.debug;
-    let show = match cli.show {
+    let input = fs::read_to_string(&CLI.file).expect("Unable to read file");
+    let verbose = CLI.verbose || CLI.debug;
+    let debug = CLI.debug;
+    let show = match CLI.show {
         0 => usize::MAX,
         x => x,
     };
@@ -52,9 +47,9 @@ fn main() {
     let (choices, _score) = initial_solve(start, &mid, end);
 
     if debug {
-        println!("\nPossible spellings:");
+        println!("\nPossible changes:");
         for choice in choices.iter().take(show) {
-            println!("{:?}\n", initial_pedal_changes(choice));
+            println!("{:?}\n", pedal_changes(choice));
         }
     }
 
@@ -78,16 +73,16 @@ fn main() {
             println!("{s:?}");
         }
         println!(
-            "Found but did not display {} other possibilities.",
+            "and {} other possibilities.",
             solutions.len().saturating_sub(show)
         );
     } else if !choices.is_empty() {
         println!("Found possible solutions, but could not avoid simultaneous pedal changes.\n");
         for choice in choices.iter().take(show) {
-            println!("{:?}\n", initial_pedal_changes(choice));
+            println!("{:?}\n", pedal_changes(choice));
         }
         println!(
-            "Found but did not display {} other possibilities.",
+            "and {} other possibilities.",
             choices.len().saturating_sub(show)
         );
     } else {

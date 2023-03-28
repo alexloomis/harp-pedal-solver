@@ -1,4 +1,5 @@
 use clap::Parser;
+use lazy_static::lazy_static;
 use std::path::PathBuf;
 
 const PEDAL_COST: usize = 100;
@@ -19,23 +20,23 @@ pub struct Cli {
     pub verbose: bool,
     #[arg(long)]
     pub debug: bool,
-    #[arg(long, default_value_t = SHOW, value_name = "INT")]
     /// Limit how many possibilities are shown. To show all, set show = 0.
+    #[arg(long, default_value_t = SHOW, value_name = "INT")]
     pub show: usize,
-    #[arg(long, default_value_t = PEDAL_COST, value_name = "INT")]
-    /// UNIMPLEMENTED.
     /// The cost for each pedal change.
+    #[arg(long, default_value_t = PEDAL_COST, value_name = "INT")]
     pub pedal_cost: usize,
-    #[arg(long, default_value_t = DOUBLE_CHANGE_COST, value_name = "INT")]
-    /// UNIMPLEMENTED.
     /// How much we penalize simultaneous pedal changes.
+    #[arg(long, default_value_t = DOUBLE_CHANGE_COST, value_name = "INT")]
     pub double_change_cost: usize,
-    #[arg(long, default_value_t = DOUBLE_STRING_COST, value_name = "INT")]
-    /// UNIMPLEMENTED.
     /// How much we penalize doubled strings (eg E# and F).
+    #[arg(long, default_value_t = DOUBLE_STRING_COST, value_name = "INT")]
     pub double_string_cost: usize,
-    #[arg(long, default_value_t = CROSS_STRING_COST, value_name = "INT")]
-    /// UNIMPLEMENTED.
     /// How much we penalize crossed strings (eg E# and Fb).
+    #[arg(long, default_value_t = CROSS_STRING_COST, value_name = "INT")]
     pub cross_string_cost: usize,
+}
+
+lazy_static! {
+    pub static ref CLI: Cli = Cli::parse();
 }

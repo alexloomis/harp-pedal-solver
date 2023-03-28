@@ -28,25 +28,28 @@ pub fn initial_solve(
 
 // Finds the pedal changes for each foot,
 // some may be simultaneous with the same foot.
-pub fn initial_pedal_changes(
-    music: &[Harp],
-) -> (Vec<Vec<Note>>, Vec<Vec<Note>>) {
+pub fn pedal_changes(music: &[Harp]) -> (Vec<Vec<Note>>, Vec<Vec<Note>>) {
     unset_seen(music)
         .iter()
         .map(|h| (harp_notes(*h, 0..=2), harp_notes(*h, 3..=6)))
         .unzip()
 }
 
-// Drops the first (fake) bar.
+#[allow(clippy::type_complexity)]
 pub fn shifted_changes(
-    music: &[Vec<Note>],
-    settings: &[Harp],
+    spellings: &[Vec<Note>],
+    pedals: &[Harp],
 ) -> (Vec<Vec<Option<Note>>>, Vec<Vec<Option<Note>>>) {
-    let (l, r) = initial_pedal_changes(settings);
+    // The first bar is the pedal diagram,
+    // so we will work with l[1..] and r[1..]
+    let (l, r) = pedal_changes(pedals);
     if num_shifts(&l[1..]) == usize::MAX || num_shifts(&r[1..]) == usize::MAX {
         (vec![], vec![])
     } else {
-        (shift(&music[1..], &l[1..]), shift(&music[1..], &r[1..]))
+        (
+            shift(&spellings[1..], &l[1..]),
+            shift(&spellings[1..], &r[1..]),
+        )
     }
 }
 
@@ -79,8 +82,6 @@ pub fn scored_changes(
     }
     out
 }
-
-// Something after this comment does not work as intended.
 
 pub fn solve(
     x: Option<Harp>,

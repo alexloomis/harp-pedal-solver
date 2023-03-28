@@ -1,3 +1,4 @@
+use crate::cli::CLI;
 use crate::prelude::{num_crossed, num_same, update_harp, Harp};
 use pathfinding::directed::astar::{astar_bag, AstarSolution};
 
@@ -16,32 +17,19 @@ where
     out
 }
 
-// What is the cost for each pedal change?
-const PEDAL_COST: usize = 100;
-// How much do we penalize simultaneous pedal changes on the same foot?
-const DOUBLE_CHANGE_COST: usize = 40;
-// How much do we penalize doubled strings (eg E# and F)?
-const DOUBLE_STRING_COST: usize = 10;
-// How much do we penalize crossed strings (eg E# and Fb)?
-const CROSS_STRING_COST: usize = 120;
-// How much do we penalize each beat that
-// a string is different than the key signature?
-#[allow(dead_code)]
-const OUT_OF_KEY: usize = 0;
-
 fn cost(start: Harp, finish: Harp) -> usize {
     let mut out = 0;
     let l_count = changes(start, finish, 0..=2);
     let r_count = changes(start, finish, 3..=6);
-    out += PEDAL_COST * (l_count + r_count);
+    out += CLI.pedal_cost * (l_count + r_count);
     if l_count > 1 {
-        out += DOUBLE_CHANGE_COST * (l_count - 1);
+        out += CLI.double_change_cost * (l_count - 1);
     }
     if r_count > 1 {
-        out += DOUBLE_CHANGE_COST * (r_count - 1);
+        out += CLI.double_change_cost * (r_count - 1);
     }
-    out += DOUBLE_STRING_COST * num_same(finish);
-    out += CROSS_STRING_COST * num_crossed(finish);
+    out += CLI.double_string_cost * num_same(finish);
+    out += CLI.cross_string_cost * num_crossed(finish);
     out
 }
 
