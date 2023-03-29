@@ -5,9 +5,10 @@
 // pub mod state;
 pub mod assign;
 pub mod cli;
+pub mod cost;
+pub mod enharmonic;
 pub mod parse;
 pub mod prelude;
 pub mod shift;
 pub mod solve;
-pub mod transition;
 pub mod util;

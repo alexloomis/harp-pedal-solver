@@ -1,40 +1,9 @@
-use crate::cli::CLI;
-use crate::prelude::{num_crossed, num_same, update_harp, Harp};
+use crate::cost::enharmonic_cost;
+use crate::prelude::{changes, update_harp, Harp};
 use pathfinding::directed::astar::{astar_bag, AstarSolution};
 
-// How many pedal changes to go between two states?
-fn changes<R>(start: Harp, finish: Harp, range: R) -> usize
-where
-    R: std::ops::RangeBounds<usize> + std::iter::IntoIterator<Item = usize>,
-{
-    let mut out = 0;
-    for i in range {
-        // If both start[i] and finish[i] are defined, and they differ
-        if start[i] * finish[i] != 0 && start[i] != finish[i] {
-            out += 1;
-        }
-    }
-    out
-}
-
-fn cost(start: Harp, finish: Harp) -> usize {
-    let mut out = 0;
-    let l_count = changes(start, finish, 0..=2);
-    let r_count = changes(start, finish, 3..=6);
-    out += CLI.pedal_cost * (l_count + r_count);
-    if l_count > 1 {
-        out += CLI.double_change_cost * (l_count - 1);
-    }
-    if r_count > 1 {
-        out += CLI.double_change_cost * (r_count - 1);
-    }
-    out += CLI.double_string_cost * num_same(finish);
-    out += CLI.cross_string_cost * num_crossed(finish);
-    out
-}
-
 // Given possible successors `a`, what are the possible states,
-// the new index, and what is the transition cost?
+// the new index, and what is the transition enharmonic_cost?
 fn annotate_successors(
     a: &[Harp],
     state: Harp,
@@ -42,7 +11,7 @@ fn annotate_successors(
 ) -> Vec<((Harp, usize), usize)> {
     let f = |s: &Harp| update_harp(state, *s);
     a.iter()
-        .map(|s| ((f(s), i + 1), cost(state, f(s))))
+        .map(|s| ((f(s), i + 1), enharmonic_cost(state, f(s))))
         .collect::<Vec<((Harp, usize), usize)>>()
 }
 
@@ -79,7 +48,7 @@ fn min_score_via_astar(
     )
 }
 
-pub fn find_paths(
+pub fn find_enharmonic_paths(
     start: Harp,
     middle: &[Vec<Harp>],
     end: Harp,

@@ -65,7 +65,8 @@ fn main() {
     full_music.push(harp_to_notes(end.unwrap_or([0; 7])));
 
     println!("Breaking up simultaneous pedal changes...");
-    let solutions = solve(start, &mid, end);
+    let mut solutions = solve(start, &mid, end);
+    solutions.sort_by(|x, y| x.1.cmp(&y.1));
 
     if !solutions.is_empty() {
         println!("Possible solutions:\n");

@@ -1,9 +1,10 @@
 #![allow(dead_code)]
 use crate::assign::assign;
+use crate::cost::{pedal_cost, shift_cost};
+use crate::enharmonic::find_enharmonic_paths;
 use crate::parse::Measure;
 use crate::prelude::*;
 use crate::shift::{num_shifts, shift};
-use crate::transition::find_paths;
 
 // Run the initial solver.
 pub fn initial_solve(
@@ -23,7 +24,7 @@ pub fn initial_solve(
         })
         .map(|p| assign(&p))
         .collect::<Vec<Vec<Harp>>>();
-    find_paths(start, &middle, end)
+    find_enharmonic_paths(start, &middle, end)
 }
 
 // Finds the pedal changes for each foot,
@@ -53,15 +54,14 @@ pub fn shifted_changes(
     }
 }
 
-fn score(_pedals: &[Option<Note>]) -> usize {
-    1
-}
-
 pub fn scored_changes(
     music: &[Vec<Note>],
     settings: &[Harp],
 ) -> Vec<(Vec<Vec<Note>>, usize)> {
     let mut out = vec![];
+    let (l_changes, r_changes) = pedal_changes(settings);
+    let shift_cost = shift_cost(&l_changes) + shift_cost(&r_changes);
+    // Discards the initial pedal diagram.
     let (lefts, rights) = shifted_changes(music, settings);
     for l in lefts.iter() {
         for r in rights.iter() {
@@ -77,7 +77,7 @@ pub fn scored_changes(
                 }
                 pedals_l_r.push(pedals_l_r_i);
             }
-            out.push((pedals_l_r, score(l) + score(r)));
+            out.push((pedals_l_r, pedal_cost(l) + pedal_cost(r) + shift_cost));
         }
     }
     out
@@ -91,12 +91,10 @@ pub fn solve(
     let mut out = vec![];
     let (choices, _) = initial_solve(x, y, z);
     let mut full_music = vec![harp_to_notes(x.unwrap_or([0; 7]))];
-    // let mut full_music = vec![];
     full_music.append(&mut y.iter().flatten().map(|v| v.to_vec()).collect());
     full_music.push(harp_to_notes(z.unwrap_or([0; 7])));
     for settings in choices {
         out.append(&mut scored_changes(&full_music, &settings))
-        // out.append(&mut scored_changes(&full_music, &settings[1..]))
     }
     out
 }

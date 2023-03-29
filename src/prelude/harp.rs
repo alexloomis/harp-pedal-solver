@@ -17,7 +17,7 @@ pub fn pedal_diagram(harp: Harp) -> String {
 }
 
 // Define pedals
-fn name_to_usize(name: Name) -> usize {
+pub fn name_to_usize(name: Name) -> usize {
     match name {
         Name::D => 0,
         Name::C => 1,
@@ -125,6 +125,20 @@ pub fn unset_seen(harps: &[Harp]) -> Vec<Harp> {
         }
         out.push(new);
         state = update_harp(state, new);
+    }
+    out
+}
+
+pub fn changes<R>(start: Harp, finish: Harp, range: R) -> usize
+where
+    R: std::ops::RangeBounds<usize> + std::iter::IntoIterator<Item = usize>,
+{
+    let mut out = 0;
+    for i in range {
+        // If both start[i] and finish[i] are defined, and they differ
+        if start[i] * finish[i] != 0 && start[i] != finish[i] {
+            out += 1;
+        }
     }
     out
 }
