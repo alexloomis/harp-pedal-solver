@@ -136,7 +136,7 @@ fn parse_clean_file(
     s: &str,
 ) -> IResult<&str, (Option<Harp>, Vec<Measure>, Option<Harp>)> {
     let (rem, start) = opt(ws(diagram))(s)?;
-    let (rem, body) = music(rem)?;
+    let (rem, body) = ws(music)(rem)?;
     let (rem, end) = opt(ws(diagram))(rem)?;
     Ok((rem, (start, body, end)))
 }
