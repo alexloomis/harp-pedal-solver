@@ -8,3 +8,4 @@ To do:
 - [ ] allow rests
 - [ ] allow pedal diagrams mid-music?
 - [ ] allow multiple sections per file?
+- [ ] good error handling
