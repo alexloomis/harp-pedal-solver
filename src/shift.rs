@@ -22,7 +22,7 @@ fn add_none(
     remaining: &[(Vec<Note>, Vec<Note>)],
 ) {
     let mut tree = Tree::new(None);
-    grow_tree(&mut tree, change_builder(remaining, &[]));
+    grow_tree(&mut tree, change_builder(remaining, vec![]));
     forest.push_back(tree);
 }
 
@@ -39,7 +39,7 @@ fn make_children(
             let mut tree = Tree::new(Some(*change));
             let mut new_acc = acc.to_owned();
             new_acc.remove(i);
-            grow_tree(&mut tree, change_builder(remaining, &new_acc));
+            grow_tree(&mut tree, change_builder(remaining, new_acc));
             forest.push_back(tree);
         }
     }
@@ -60,23 +60,22 @@ fn kill_barren_children(forest: &mut Forest<Option<Note>>) {
 // TODO: make private, change tests to use shift
 pub fn change_builder(
     music_changes: &[(Vec<Note>, Vec<Note>)],
-    acc: &[Note], // surplus changes getting passed on
+    mut acc: Vec<Note>, // surplus changes getting passed on
 ) -> Forest<Option<Note>> {
     let mut forest = Forest::<Option<Note>>::new();
-    let mut acc_ = acc.to_owned();
     if let Some(((new_music, new_changes), remaining)) =
         music_changes.split_first()
     {
-        acc_.extend(new_changes);
+        acc.extend(new_changes);
         // If we owe more changes than we have slots, there are no solutions.
-        if acc_.len() > remaining.len() + 1 {
-            println!("killing branch with acc {acc_:?}");
+        if acc.len() > remaining.len() + 1 {
+            println!("killing branch with acc {acc:?}");
             return forest;
         }
-        if acc_.is_empty() {
+        if acc.is_empty() {
             add_none(&mut forest, remaining);
         } else {
-            make_children(&mut forest, new_music, &acc_, remaining);
+            make_children(&mut forest, new_music, &acc, remaining);
         }
         // If we expect grandchildren, kill barren children.
         if !remaining.is_empty() {
@@ -94,7 +93,7 @@ pub fn shift(
     for i in (0..music.len()).rev() {
         vec.push((music[i].clone(), changes[i].clone()));
     }
-    unravel_paths(change_builder(&vec, &[]))
+    unravel_paths(change_builder(&vec, vec![]))
 }
 
 fn accumulate(total: usize, acc: usize, new: usize) -> (usize, usize) {
