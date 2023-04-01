@@ -1,5 +1,5 @@
 use crate::cost::enharmonic_cost;
-use crate::prelude::{changes, update_harp, Harp};
+use crate::prelude::{num_changes, update_harp, Harp};
 use pathfinding::directed::astar::{astar_bag, AstarSolution};
 
 // Given possible successors `a`, what are the possible states,
@@ -42,7 +42,7 @@ fn min_score_via_astar(
         // Given we are at (s, i), where can we go?
         |&(state, i)| successors(state, i, middle, end),
         // Heuristic giving a lower bound on the distance p to end
-        |&(state, _)| changes(state, end, 0..=6),
+        |&(state, _)| num_changes(state, end, 0..=6),
         // success
         |&(_, i)| i > middle.len(),
     )

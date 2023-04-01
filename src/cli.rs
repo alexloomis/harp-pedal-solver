@@ -1,4 +1,4 @@
-use clap::{ArgGroup, Parser};
+use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
 use lazy_static::lazy_static;
 use std::path::PathBuf;
@@ -21,6 +21,9 @@ const PEDAL_DISTANCE_COST: usize = 10;
 #[command(author, version, about)]
 pub struct Cli {
     pub file: PathBuf,
+    /// Write output to FILE.
+    #[arg(short, long, value_name = "FILE")]
+    pub output: Option<PathBuf>,
     /// Limit how many possibilities are shown. To show all, set show = 0.
     #[arg(long, default_value_t = SHOW, value_name = "INT")]
     pub show: usize,

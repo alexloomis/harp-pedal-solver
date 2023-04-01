@@ -91,7 +91,7 @@ pub fn shift(
 ) -> Vec<Vec<Option<Note>>> {
     let mut vec = vec![];
     for i in (0..music.len()).rev() {
-        vec.push((music[i].clone(), changes[i].clone()));
+        vec.push((music[i].to_vec(), changes[i].to_vec()));
     }
     unravel_paths(change_builder(&vec, vec![]))
 }

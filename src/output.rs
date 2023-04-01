@@ -78,7 +78,7 @@ pub fn make_ly_file(
     changes: Vec<Vec<Note>>,
 ) -> String {
     let mut lines: Vec<String> =
-        vec!["\\version \"2.24.0\"".to_string(), "".to_string()];
+        vec!["\\version \"2.22.0\"".to_string(), "".to_string()];
     lines.push(make_ly_treble(treble, start, end));
     lines.push("".to_string());
     lines.push(make_ly_pedals(changes));

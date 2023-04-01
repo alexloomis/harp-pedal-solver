@@ -6,8 +6,8 @@ use crate::shift::num_shifts;
 
 pub fn enharmonic_cost(start: Harp, finish: Harp) -> usize {
     let mut out = 0;
-    let l_count = changes(start, finish, 0..=2);
-    let r_count = changes(start, finish, 3..=6);
+    let l_count = num_changes(start, finish, 0..=2);
+    let r_count = num_changes(start, finish, 3..=6);
     out += CLI.pedal_cost * (l_count + r_count);
     if l_count > 1 {
         out += CLI.double_change_cost * (l_count - 1);
@@ -52,5 +52,5 @@ pub fn pedal_cost(new: &[Option<Note>]) -> usize {
 }
 
 pub fn shift_cost(old: &[Vec<Note>]) -> usize {
-    num_shifts(old) * CLI.early_cost
+    num_shifts(old).saturating_mul(CLI.early_cost)
 }

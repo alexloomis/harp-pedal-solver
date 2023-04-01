@@ -103,9 +103,16 @@ fn update_harps(state: Harp, changes: &[Harp]) -> Harp {
     changes.iter().fold(state, |x, y| update_harp(x, *y))
 }
 
-fn full_initial(music: &[Harp]) -> Harp {
+pub fn update_harp_notes(state: Harp, changes: &[Vec<Note>]) -> Harp {
+    let harp_changes = changes.iter().map(|v| notes_to_harp(v)).collect_vec();
+    update_harps(state, &harp_changes)
+}
+
+// Any pedal that is never seen is set to flat.
+pub fn full_initial(music: &[Harp]) -> Harp {
     let mut out = music.to_vec();
-    let last = out.pop().unwrap();
+    // let last = out.pop().unwrap();
+    let last = [1; 7];
     update_harps(last, &out.into_iter().rev().collect::<Vec<Harp>>())
 }
 
@@ -129,7 +136,7 @@ pub fn unset_seen(harps: &[Harp]) -> Vec<Harp> {
     out
 }
 
-pub fn changes<R>(start: Harp, finish: Harp, range: R) -> usize
+pub fn num_changes<R>(start: Harp, finish: Harp, range: R) -> usize
 where
     R: std::ops::RangeBounds<usize> + std::iter::IntoIterator<Item = usize>,
 {

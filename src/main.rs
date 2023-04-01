@@ -1,25 +1,22 @@
 // #![allow(dead_code)]
 #![warn(clippy::needless_pass_by_value)]
+use clap_verbosity_flag::LevelFilter;
+use itertools::Itertools;
+use log::{debug, error, info, warn};
+use simple_logger::SimpleLogger;
+use std::fs;
+use std::io::Write;
+use std::path::PathBuf;
+use std::process::{Command, Stdio};
+// use std::time::Instant;
 
 use harp_pedal_solver::cli::CLI;
 use harp_pedal_solver::output::make_ly_file;
 use harp_pedal_solver::parse::*;
 use harp_pedal_solver::prelude::*;
 use harp_pedal_solver::solve::*;
-use log::{debug, error, info, warn};
-// use std::time::Instant;
-use clap_verbosity_flag::Level;
-use simple_logger::SimpleLogger;
-// use simple_logger::SimpleLogger;
-use std::fs;
 
 // Currently silently sets impossible measure to ~~~|~~~~
-#[allow(dead_code)]
-const IMPOSSIBLE_CHORD: &str = "C
-   G G# A
-   C
-";
-
 fn main() {
     let input = fs::read_to_string(&CLI.file).expect("Unable to read file");
     let show = match CLI.show {
@@ -32,6 +29,10 @@ fn main() {
         .without_timestamps()
         .init()
         .unwrap();
+    let output = CLI
+        .output
+        .clone()
+        .unwrap_or_else(|| PathBuf::from("pedals"));
     let (start, mid, end) = match parse(&input) {
         Ok(x) => x,
         Err(x) => {
@@ -59,52 +60,86 @@ fn main() {
     info!("Checking enharmonic spellings...");
     let (choices, score) = initial_solve(start, &mid, end);
 
-    if CLI.verbose.log_level() >= Some(Level::Debug) {
+    if log_level >= LevelFilter::Debug {
         debug!("Possible changes, with score {score}:");
         for choice in choices.iter().take(show) {
             debug!("{:?}", pedal_changes(choice));
         }
     }
 
-    // let mut full_music = Vec::new();
-    // full_music.push(harp_to_notes(start.unwrap_or([0; 7])));
-    // full_music.append(
-    //     &mut mid
-    //         .clone()
-    //         .into_iter()
-    //         .flatten()
-    //         .collect::<Vec<Vec<Note>>>(),
-    // );
-    // full_music.push(harp_to_notes(end.unwrap_or([0; 7])));
-
     info!("Breaking up simultaneous pedal changes...");
     let mut solutions = solve(start, &mid, end);
-    solutions.sort_by(|x, y| x.1.cmp(&y.1));
+    solutions.sort_by(|x, y| x.0.cmp(&y.0));
 
     if !solutions.is_empty() {
-        println!("Possible solutions:\n");
-        for s in solutions.iter().take(show) {
-            println!("{s:?}");
+        if log_level >= LevelFilter::Info {
+            info!("Possible solutions:");
+            for s in solutions.iter().take(show) {
+                println!("{s:?}");
+            }
+            info!(
+                "and {} other possibilities.",
+                solutions.len().saturating_sub(show)
+            );
         }
-        println!(
-            "\nand {} other possibilities.",
-            solutions.len().saturating_sub(show)
-        );
     } else if !choices.is_empty() {
-        println!("Found possible solutions, but could not avoid simultaneous pedal changes.\n");
-        for choice in choices.iter().take(show) {
-            println!("{:?}\n", pedal_changes(choice));
+        if log_level >= LevelFilter::Warn {
+            warn!("Found possible solutions, but could not avoid simultaneous pedal changes.");
+            for choice in choices.iter().take(show) {
+                println!("{:?}", pedal_changes(choice));
+            }
+            info!(
+                "and {} other possibilities.",
+                choices.len().saturating_sub(show)
+            );
         }
-        println!(
-            "\nand {} other possibilities.",
-            choices.len().saturating_sub(show)
-        );
     } else {
-        println!("Could not find any solutions.");
+        error!("Could not find any solutions.");
+        return;
     }
 
-    println!(
-        "{}",
-        make_ly_file(mid, start.unwrap(), end.unwrap(), solutions[0].0.clone())
-    );
+    let decision = if !solutions.is_empty() {
+        solutions[0].to_owned().1
+    } else {
+        process_choice(&choices[0])
+    };
+
+    // Currently sometimes wrong if there are few changes
+    // and few initial settins given.
+    // Caused by using notes_to_harp instead of enharmonics.
+    let mut start_diagram =
+        full_initial(&decision.iter().map(|v| notes_to_harp(v)).collect_vec());
+    // Take unset pedals from end.
+    if let Some(d) = end {
+        start_diagram = update_harp(d, start_diagram)
+    }
+    // Apply to initially unset pedals.
+    if let Some(d) = start {
+        start_diagram = update_harp(start_diagram, d)
+    }
+    let end_diagram = match start {
+        Some(d) => update_harp_notes(update_harp([1; 7], d), &decision),
+        None => update_harp_notes([1; 7], &decision),
+    };
+
+    let ly_file = make_ly_file(mid, start_diagram, end_diagram, decision);
+
+    let mut ly_command = Command::new("lilypond")
+        .args([
+            "-l",
+            &log_level.to_string(),
+            "-o",
+            &output.to_string_lossy(),
+            "-",
+        ])
+        .stdin(Stdio::piped())
+        .spawn()
+        .unwrap();
+    ly_command
+        .stdin
+        .as_mut()
+        .unwrap()
+        .write_all(ly_file.as_bytes())
+        .unwrap();
+    ly_command.wait().unwrap();
 }
