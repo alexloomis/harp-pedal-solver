@@ -2,6 +2,7 @@
 #![warn(clippy::needless_pass_by_value)]
 
 use harp_pedal_solver::cli::CLI;
+use harp_pedal_solver::output::make_ly_file;
 use harp_pedal_solver::parse::*;
 use harp_pedal_solver::prelude::*;
 use harp_pedal_solver::solve::*;
@@ -101,4 +102,9 @@ fn main() {
     } else {
         println!("Could not find any solutions.");
     }
+
+    println!(
+        "{}",
+        make_ly_file(mid, start.unwrap(), end.unwrap(), solutions[0].0.clone())
+    );
 }

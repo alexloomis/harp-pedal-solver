@@ -7,6 +7,7 @@ pub mod assign;
 pub mod cli;
 pub mod cost;
 pub mod enharmonic;
+pub mod output;
 pub mod parse;
 pub mod prelude;
 pub mod shift;
