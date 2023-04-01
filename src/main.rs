@@ -5,7 +5,11 @@ use harp_pedal_solver::cli::CLI;
 use harp_pedal_solver::parse::*;
 use harp_pedal_solver::prelude::*;
 use harp_pedal_solver::solve::*;
+use log::{debug, error, info, warn};
 // use std::time::Instant;
+use clap_verbosity_flag::Level;
+use simple_logger::SimpleLogger;
+// use simple_logger::SimpleLogger;
 use std::fs;
 
 // Currently silently sets impossible measure to ~~~|~~~~
@@ -17,54 +21,62 @@ const IMPOSSIBLE_CHORD: &str = "C
 
 fn main() {
     let input = fs::read_to_string(&CLI.file).expect("Unable to read file");
-    let verbose = CLI.verbose || CLI.debug;
-    let debug = CLI.debug;
     let show = match CLI.show {
         0 => usize::MAX,
         x => x,
     };
+    let log_level = CLI.verbose.log_level_filter();
+    SimpleLogger::new()
+        .with_level(log_level)
+        .without_timestamps()
+        .init()
+        .unwrap();
+    let (start, mid, end) = match parse(&input) {
+        Ok(x) => x,
+        Err(x) => {
+            error!("Error parsing file:\n{x}");
+            return;
+        }
+    };
 
-    let (start, mid, end) = parse(&input);
-    if verbose {
-        println!(
-            "Starting setting:\n{}\n",
-            match start {
-                Some(h) => pedal_diagram(h),
-                None => String::from("none"),
-            }
-        );
-        println!("Music:\n{mid:?}\n");
-        println!(
-            "Final setting:\n{}\n",
-            match end {
-                Some(h) => pedal_diagram(h),
-                None => String::from("none"),
-            }
-        );
-    }
+    debug!(
+        "Starting setting: {}",
+        match start {
+            Some(h) => pedal_diagram(h),
+            None => String::from("none"),
+        }
+    );
+    debug!("Music: {mid:?}");
+    debug!(
+        "Final setting: {}",
+        match end {
+            Some(h) => pedal_diagram(h),
+            None => String::from("none"),
+        }
+    );
 
-    println!("Checking enharmonic spellings...");
-    let (choices, _score) = initial_solve(start, &mid, end);
+    info!("Checking enharmonic spellings...");
+    let (choices, score) = initial_solve(start, &mid, end);
 
-    if debug {
-        println!("\nPossible changes:");
+    if CLI.verbose.log_level() >= Some(Level::Debug) {
+        debug!("Possible changes, with score {score}:");
         for choice in choices.iter().take(show) {
-            println!("{:?}\n", pedal_changes(choice));
+            debug!("{:?}", pedal_changes(choice));
         }
     }
 
-    let mut full_music = Vec::new();
-    full_music.push(harp_to_notes(start.unwrap_or([0; 7])));
-    full_music.append(
-        &mut mid
-            .clone()
-            .into_iter()
-            .flatten()
-            .collect::<Vec<Vec<Note>>>(),
-    );
-    full_music.push(harp_to_notes(end.unwrap_or([0; 7])));
+    // let mut full_music = Vec::new();
+    // full_music.push(harp_to_notes(start.unwrap_or([0; 7])));
+    // full_music.append(
+    //     &mut mid
+    //         .clone()
+    //         .into_iter()
+    //         .flatten()
+    //         .collect::<Vec<Vec<Note>>>(),
+    // );
+    // full_music.push(harp_to_notes(end.unwrap_or([0; 7])));
 
-    println!("Breaking up simultaneous pedal changes...");
+    info!("Breaking up simultaneous pedal changes...");
     let mut solutions = solve(start, &mid, end);
     solutions.sort_by(|x, y| x.1.cmp(&y.1));
 
@@ -74,7 +86,7 @@ fn main() {
             println!("{s:?}");
         }
         println!(
-            "and {} other possibilities.",
+            "\nand {} other possibilities.",
             solutions.len().saturating_sub(show)
         );
     } else if !choices.is_empty() {
@@ -83,7 +95,7 @@ fn main() {
             println!("{:?}\n", pedal_changes(choice));
         }
         println!(
-            "and {} other possibilities.",
+            "\nand {} other possibilities.",
             choices.len().saturating_sub(show)
         );
     } else {

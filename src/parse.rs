@@ -35,7 +35,7 @@ fn pedal_setting(s: &str) -> IResult<&str, u8> {
         '^' => 1,
         '-' => 2,
         'v' => 3,
-        x => panic!("Invalid pedal setting {x}"),
+        _ => unreachable!(),
     };
     Ok((rem, setting))
 }
@@ -66,7 +66,7 @@ fn pitch(s: &str) -> IResult<&str, Name> {
         'E' | 'e' => Name::E,
         'F' | 'f' => Name::F,
         'G' | 'g' => Name::G,
-        x => panic!("Invalid note name {x}"),
+        _ => unreachable!(),
     };
     Ok((rem, name))
 }
@@ -78,7 +78,7 @@ fn modifier(s: &str) -> IResult<&str, Modifier> {
         'f' | 'b' | '♭' => Modifier::Flat,
         'n' | '♮' => Modifier::Natural,
         's' | '#' | '♯' => Modifier::Sharp,
-        x => panic!("Invalid modifier {x}"),
+        _ => unreachable!(),
     };
     Ok((rem, modif))
 }
@@ -141,11 +141,14 @@ fn parse_clean_file(
     Ok((rem, (start, body, end)))
 }
 
-pub fn parse(s: &str) -> (Option<Harp>, Vec<Measure>, Option<Harp>) {
+#[allow(clippy::type_complexity)]
+pub fn parse(
+    s: &str,
+) -> Result<(Option<Harp>, Vec<Measure>, Option<Harp>), String> {
     let t = strip_comments(s);
     let r = all_consuming(parse_clean_file)(&t).finish();
     match r {
-        Ok((_, y)) => y,
-        Err(x) => panic!("Failed to parse file: {x}"),
+        Ok((_, y)) => Ok(y),
+        Err(x) => Err(x.to_string()),
     }
 }
