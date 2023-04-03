@@ -71,6 +71,34 @@ fn make_ly_pedals(changes: Vec<Vec<Note>>) -> String {
     out
 }
 
+fn make_ly_pedals_l(changes: Vec<Option<Note>>) -> String {
+    let mut out = "pedalsL = { ".to_string();
+    for beat in changes {
+        out.push_str("s ");
+        if let Some(change) = beat {
+            out.push_str("_\"");
+            out.push_str(&change.to_string());
+            out.push_str("\" ");
+        }
+    }
+    out.push('}');
+    out
+}
+
+fn make_ly_pedals_r(changes: Vec<Option<Note>>) -> String {
+    let mut out = "pedalsR = { ".to_string();
+    for beat in changes {
+        out.push_str("s ");
+        if let Some(change) = beat {
+            out.push_str("_\"");
+            out.push_str(&change.to_string());
+            out.push_str("\" ");
+        }
+    }
+    out.push('}');
+    out
+}
+
 pub fn make_ly_file(
     treble: Vec<Measure>,
     start: Harp,
@@ -86,6 +114,29 @@ pub fn make_ly_file(
     lines.push("\\new Staff <<".to_string());
     lines.push("    \\new Voice \\treble".to_string());
     lines.push("    \\new Voice \\pedals".to_string());
+    lines.push(">>".to_string());
+    lines.join("\n")
+}
+
+pub fn make_ly_file_(
+    treble: Vec<Measure>,
+    start: Harp,
+    end: Harp,
+    changes: &Pedals,
+) -> String {
+    let (lefts, rights) = unzip_pedals(changes);
+    let mut lines: Vec<String> =
+        vec!["\\version \"2.22.0\"".to_string(), "".to_string()];
+    lines.push(make_ly_treble(treble, start, end));
+    lines.push("".to_string());
+    lines.push(make_ly_pedals_l(lefts));
+    lines.push("".to_string());
+    lines.push(make_ly_pedals_r(rights));
+    lines.push("".to_string());
+    lines.push("\\new Staff <<".to_string());
+    lines.push("    \\new Voice \\treble".to_string());
+    lines.push("    \\new Voice \\pedalsL".to_string());
+    lines.push("    \\new Voice \\pedalsR".to_string());
     lines.push(">>".to_string());
     lines.join("\n")
 }

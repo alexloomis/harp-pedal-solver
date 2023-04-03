@@ -1,0 +1,22 @@
+What information do we need, and what information do we need to generate it?
+Need for logic:
+  Initial pedals
+  Final pedals
+  Pitches
+Needed output:
+  Starting pedal diagram
+  End pedal diagram
+  Spellings
+  Pedal changes
+Nice for good graphical output:
+  Key sig
+  Time sig/measures
+Stretch for great graphical output:
+  Two staff output
+  Mixed rhythms
+
+Library should take initial pedals, final pedals, and pitches,
+return starting diagram, end diagram, spellings, changes.
+The command-line binary can use this and measure information
+to generate a lilypond file.
+A separate gui application can use this to decorate a graphical entry.

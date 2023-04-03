@@ -60,3 +60,18 @@ pub fn find_enharmonic_paths(
     }
     (out, pw_score)
 }
+
+// Trims start and end state.
+pub fn find_enharmonic_paths_(
+    start: Harp,
+    middle: &[Vec<Harp>],
+    end: Harp,
+) -> Vec<Vec<Harp>> {
+    let (astar, _) = min_score_via_astar(start, middle, end).unwrap();
+    let mut out: Vec<Vec<Harp>> = Vec::with_capacity(astar.size_hint().0);
+    for mut path in astar {
+        path.pop();
+        out.push(path.into_iter().map(|x| x.0).skip(1).collect());
+    }
+    out
+}

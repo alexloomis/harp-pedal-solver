@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use crate::util::*;
+use itertools::Itertools;
 use trees::{Forest, Tree};
 
 // Is this pedal setting compatable with this bar?
@@ -96,13 +97,43 @@ pub fn shift(
     unravel_paths(change_builder(&vec, vec![]))
 }
 
+fn shift_pedals_builder(
+    music: &[Harp],
+    pedals: &[Vec<Note>],
+) -> Vec<Vec<Option<Note>>> {
+    let mut vec = vec![];
+    for i in (0..music.len()).rev() {
+        vec.push((harp_to_notes(music[i]).to_vec(), pedals[i].to_vec()));
+    }
+    unravel_paths(change_builder(&vec, vec![]))
+}
+
+pub fn shift_pedals(
+    music: &[Harp],
+    pedals: Vec<(Vec<Note>, Vec<Note>)>,
+) -> Vec<Pedals> {
+    let mut l = Vec::with_capacity(pedals.len());
+    let mut r = Vec::with_capacity(pedals.len());
+    for (left, right) in pedals {
+        l.push(left);
+        r.push(right);
+    }
+    let lefts = shift_pedals_builder(music, &l);
+    let rights = shift_pedals_builder(music, &r);
+    lefts
+        .into_iter()
+        .cartesian_product(rights)
+        .map(|(v_l, v_r)| v_l.into_iter().zip(v_r).collect_vec())
+        .collect_vec()
+}
+
 fn accumulate(total: usize, acc: usize, new: usize) -> (usize, usize) {
     let here = usize::from(acc + new > 0);
     (total + here, acc + new - here)
 }
 
 // How many shifts are needed?
-fn num_shifts_(pedals: &[Vec<Note>]) -> (usize, usize) {
+fn num_shifts_builder(pedals: &[Vec<Note>]) -> (usize, usize) {
     pedals
         .iter()
         .map(|m| m.len())
@@ -111,7 +142,7 @@ fn num_shifts_(pedals: &[Vec<Note>]) -> (usize, usize) {
 
 // Returns usize::MAX if shifts not possible.
 pub fn num_shifts(pedals: &[Vec<Note>]) -> usize {
-    let (total, acc) = num_shifts_(pedals);
+    let (total, acc) = num_shifts_builder(pedals);
     if acc > 0 {
         usize::MAX
     } else {

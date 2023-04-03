@@ -3,10 +3,10 @@ use itertools::Itertools;
 
 use crate::assign::assign;
 use crate::cost::{pedal_cost, shift_cost};
-use crate::enharmonic::find_enharmonic_paths;
+use crate::enharmonic::{find_enharmonic_paths, find_enharmonic_paths_};
 use crate::parse::Measure;
 use crate::prelude::*;
-use crate::shift::{num_shifts, shift};
+use crate::shift::{num_shifts, shift, shift_pedals};
 
 // Run the initial solver.
 pub fn initial_solve(
@@ -29,6 +29,34 @@ pub fn initial_solve(
     find_enharmonic_paths(start, &middle, end)
 }
 
+fn refine_spelling(decisions: &mut Harp, music: &[PitchClass]) {
+    for (i, d) in decisions.iter_mut().enumerate() {
+        if let Some(note) = idx_to_note(i, *d) {
+            if !music.contains(&note_to_pc(note)) {
+                *d = 0;
+            }
+        }
+    }
+}
+
+pub fn find_spellings(input: &MusicInput) -> Vec<Vec<Harp>> {
+    let start = input.diagram;
+    let end = input.goal;
+    let mid = input
+        .music
+        .iter()
+        .map(|p| assign(p))
+        .collect::<Vec<Vec<Harp>>>();
+    // Repeats notes even though it's not necessary.
+    let mut out = find_enharmonic_paths_(start, &mid, end);
+    for spelling in &mut out {
+        for (i, s) in spelling.iter_mut().enumerate() {
+            refine_spelling(s, &input.music[i])
+        }
+    }
+    out
+}
+
 // Finds the pedal changes for each foot,
 // some may be simultaneous with the same foot.
 pub fn pedal_changes(music: &[Harp]) -> (Vec<Vec<Note>>, Vec<Vec<Note>>) {
@@ -36,6 +64,20 @@ pub fn pedal_changes(music: &[Harp]) -> (Vec<Vec<Note>>, Vec<Vec<Note>>) {
         .iter()
         .map(|h| (harp_notes(*h, 0..=2), harp_notes(*h, 3..=6)))
         .unzip()
+}
+
+// Finds the pedal changes for each foot,
+// some may be simultaneous with the same foot.
+fn get_pedal_changes(spelling: &[Harp]) -> Vec<(Vec<Note>, Vec<Note>)> {
+    unset_seen(spelling)
+        .iter()
+        .map(|h| (harp_notes(*h, 0..=2), harp_notes(*h, 3..=6)))
+        .collect_vec()
+}
+
+// Assumes music is reduced changes, ie via find_spellings
+pub fn possible_pedals(music: &[Harp]) -> Vec<Pedals> {
+    shift_pedals(music, get_pedal_changes(music))
 }
 
 #[allow(clippy::type_complexity)]
@@ -87,6 +129,16 @@ pub fn scored_changes(
             )
         })
         .collect_vec()
+}
+
+pub fn find_changes(
+    music: &[Harp],
+    settings: &[Harp],
+) -> Vec<(usize, Vec<Vec<Note>>)> {
+    scored_changes(
+        &music.iter().map(|h| harp_to_notes(*h)).collect_vec(),
+        settings,
+    )
 }
 
 // pub fn scored_changes(

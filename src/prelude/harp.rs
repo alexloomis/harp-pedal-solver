@@ -60,6 +60,23 @@ fn u8_to_modifier(u: u8) -> Option<Modifier> {
     }
 }
 
+pub fn idx_to_note(idx: usize, val: u8) -> Option<Note> {
+    u8_to_modifier(val).map(|m| Note {
+        name: usize_to_name(idx),
+        modifier: m,
+    })
+}
+
+// pub fn idx_to_note(harp: Harp, i: usize) -> Option<Note> {
+//     match harp.get(i) {
+//         Some(u) => u8_to_modifier(*u).map(|m| Note {
+//             name: usize_to_name(i),
+//             modifier: m,
+//         }),
+//         None => None,
+//     }
+// }
+
 pub fn notes_to_harp(notes: &[Note]) -> Harp {
     let mut out = [0; 7];
     for note in notes {
@@ -89,17 +106,17 @@ pub fn harp_to_notes(harp: Harp) -> Vec<Note> {
     harp_notes(harp, 0..=6)
 }
 
-pub fn update_harp(state: Harp, changes: Harp) -> Harp {
+pub fn update_harp(state: Harp, change: Harp) -> Harp {
     let mut out = state;
     for i in 0..=6 {
-        if changes[i] != 0 {
-            out[i] = changes[i];
+        if change[i] != 0 {
+            out[i] = change[i];
         }
     }
     out
 }
 
-fn update_harps(state: Harp, changes: &[Harp]) -> Harp {
+pub fn update_harps(state: Harp, changes: &[Harp]) -> Harp {
     changes.iter().fold(state, |x, y| update_harp(x, *y))
 }
 
@@ -110,7 +127,7 @@ pub fn update_harp_notes(state: Harp, changes: &[Vec<Note>]) -> Harp {
 
 // Any pedal that is never seen is set to flat.
 pub fn full_initial(music: &[Harp]) -> Harp {
-    let mut out = music.to_vec();
+    let out = music.to_vec();
     // let last = out.pop().unwrap();
     let last = [1; 7];
     update_harps(last, &out.into_iter().rev().collect::<Vec<Harp>>())

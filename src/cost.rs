@@ -2,8 +2,8 @@ use crate::cli::CLI;
 use crate::prelude::*;
 use crate::shift::num_shifts;
 
-// How many pedal changes to go between two states?
-
+// TODO: instead of penalizing simultinaity,
+// penalize total displacement required to resolve simultinaity
 pub fn enharmonic_cost(start: Harp, finish: Harp) -> usize {
     let mut out = 0;
     let l_count = num_changes(start, finish, 0..=2);
@@ -49,6 +49,11 @@ pub fn pedal_cost(new: &[Option<Note>]) -> usize {
         }
     }
     cost
+}
+
+pub fn pedal_cost_both(pedals: &Pedals) -> usize {
+    let (left, right) = unzip_pedals(pedals);
+    pedal_cost(&left) + pedal_cost(&right)
 }
 
 pub fn shift_cost(old: &[Vec<Note>]) -> usize {

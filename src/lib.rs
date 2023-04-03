@@ -4,6 +4,7 @@
 
 // pub mod state;
 pub mod assign;
+pub mod candidate;
 pub mod cli;
 pub mod cost;
 pub mod enharmonic;
