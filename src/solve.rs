@@ -68,16 +68,25 @@ pub fn pedal_changes(music: &[Harp]) -> (Vec<Vec<Note>>, Vec<Vec<Note>>) {
 
 // Finds the pedal changes for each foot,
 // some may be simultaneous with the same foot.
-fn get_pedal_changes(spelling: &[Harp]) -> Vec<(Vec<Note>, Vec<Note>)> {
-    unset_seen(spelling)
+fn get_pedal_changes(
+    diagram: Harp,
+    spelling: &[Harp],
+) -> Vec<(Vec<Note>, Vec<Note>)> {
+    let mut with_diagram = Vec::with_capacity(spelling.len() + 1);
+    with_diagram.push(diagram);
+    for s in spelling {
+        with_diagram.push(*s);
+    }
+    unset_seen(&with_diagram)
         .iter()
         .map(|h| (harp_notes(*h, 0..=2), harp_notes(*h, 3..=6)))
+        .skip(1)
         .collect_vec()
 }
 
 // Assumes music is reduced changes, ie via find_spellings
-pub fn possible_pedals(music: &[Harp]) -> Vec<Pedals> {
-    shift_pedals(music, get_pedal_changes(music))
+pub fn possible_pedals(diagram: Harp, spelling: &[Harp]) -> Vec<Pedals> {
+    shift_pedals(spelling, get_pedal_changes(diagram, spelling))
 }
 
 #[allow(clippy::type_complexity)]

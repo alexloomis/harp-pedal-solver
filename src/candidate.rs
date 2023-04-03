@@ -23,7 +23,7 @@ pub fn find_candidates(input: &MusicInput) -> Vec<Candidate> {
     let mut with_pedals = Vec::with_capacity(with_spelling.len());
     for c in with_spelling {
         let mut candidates = vec![];
-        for p in possible_pedals(c.spelling.as_ref().unwrap()) {
+        for p in possible_pedals(input.diagram, c.spelling.as_ref().unwrap()) {
             let mut new = c.clone();
             new.set_pedals(p);
             candidates.push(new);
@@ -37,8 +37,8 @@ pub fn find_candidates(input: &MusicInput) -> Vec<Candidate> {
         let cost = pedal_cost_both(c.pedals.as_ref().unwrap());
         c.set_cost(cost);
         c.set_diagram(update_harp(
-            input.goal,
-            full_initial(c.spelling.as_ref().unwrap()),
+            update_harp(input.goal, full_initial(c.spelling.as_ref().unwrap())),
+            input.diagram,
         ));
         c.set_destination(update_harps(
             input.diagram,

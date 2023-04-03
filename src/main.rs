@@ -1,6 +1,6 @@
 // #![allow(dead_code)]
 #![warn(clippy::needless_pass_by_value)]
-use clap_verbosity_flag::LevelFilter;
+// use clap_verbosity_flag::LevelFilter;
 use harp_pedal_solver::candidate::find_candidates;
 use itertools::Itertools;
 use log::{debug, error, info, warn};
@@ -15,7 +15,7 @@ use harp_pedal_solver::cli::CLI;
 use harp_pedal_solver::output::make_ly_file_;
 use harp_pedal_solver::parse::*;
 use harp_pedal_solver::prelude::*;
-use harp_pedal_solver::solve::*;
+// use harp_pedal_solver::solve::*;
 
 // Currently silently sets impossible measure to ~~~|~~~~
 fn main() {
@@ -66,7 +66,7 @@ fn main() {
             .clone()
             .into_iter()
             .flatten()
-            .map(|v| v.into_iter().map(|n| note_to_pc(n)).collect_vec())
+            .map(|v| v.into_iter().map(note_to_pc).collect_vec())
             .collect_vec(),
         goal: end.unwrap_or([0; 7]),
     };
@@ -75,16 +75,17 @@ fn main() {
     candidates.sort_by(|x, y| x.cost.cmp(&y.cost));
 
     if !candidates.is_empty() {
-        if log_level >= LevelFilter::Info {
-            info!("Possible solutions:");
-            for s in candidates.iter().take(show) {
-                println!("{:?}", s.pedals);
-            }
-            info!(
-                "and {} other possibilities.",
-                candidates.len().saturating_sub(show)
-            );
-        }
+        // if log_level >= LevelFilter::Info {
+        //     info!("Possible solutions:");
+        //     for s in candidates.iter().take(show) {
+        //         println!("{:?}", s.pedals);
+        //     }
+        //     info!(
+        //         "and {} other possibilities.",
+        //         candidates.len().saturating_sub(show)
+        //     );
+        // }
+        info!("Found {} possibilities...", candidates.len());
     } else {
         error!("Could not find any solutions.");
         return;

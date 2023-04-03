@@ -1,6 +1,7 @@
 use crate::prelude::*;
 use crate::util::*;
 use itertools::Itertools;
+use log::trace;
 use trees::{Forest, Tree};
 
 // Is this pedal setting compatable with this bar?
@@ -70,7 +71,7 @@ pub fn change_builder(
         acc.extend(new_changes);
         // If we owe more changes than we have slots, there are no solutions.
         if acc.len() > remaining.len() + 1 {
-            println!("killing branch with acc {acc:?}");
+            trace!("killing branch with acc {acc:?}");
             return forest;
         }
         if acc.is_empty() {
