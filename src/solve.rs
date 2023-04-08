@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use itertools::Itertools;
+use log::trace;
 
 use crate::assign::assign;
 use crate::cost::{pedal_cost, shift_cost};
@@ -50,8 +51,15 @@ pub fn find_spellings(input: &MusicInput) -> Vec<Vec<Harp>> {
     // Repeats notes even though it's not necessary.
     let mut out = find_enharmonic_paths_(start, &mid, end);
     for spelling in &mut out {
-        for (i, s) in spelling.iter_mut().enumerate() {
-            refine_spelling(s, &input.music[i])
+        let n = input.music.len();
+        for i in 0..n {
+            trace!(
+                "Refining {:?} with {:?}",
+                harp_to_notes(spelling[i]),
+                input.music[i].iter().map(|p| pc_to_note(*p)).collect_vec()
+            );
+            refine_spelling(&mut spelling[i], &input.music[i]);
+            trace!("resulted in {:?}", harp_to_notes(spelling[i]));
         }
     }
     out
@@ -74,6 +82,7 @@ fn get_pedal_changes(
 ) -> Vec<(Vec<Note>, Vec<Note>)> {
     let mut with_diagram = Vec::with_capacity(spelling.len() + 1);
     with_diagram.push(diagram);
+    // trace!("with_diagram {with_diagram:?}");
     for s in spelling {
         with_diagram.push(*s);
     }
@@ -84,10 +93,31 @@ fn get_pedal_changes(
         .collect_vec()
 }
 
-// Assumes music is reduced changes, ie via find_spellings
-pub fn possible_pedals(diagram: Harp, spelling: &[Harp]) -> Vec<Pedals> {
-    shift_pedals(spelling, get_pedal_changes(diagram, spelling))
+// result is one longer than spelling
+fn get_pedal_changes_(input: &CandidateBuilder) -> Vec<(Vec<Note>, Vec<Note>)> {
+    let mut with_diagram =
+        Vec::with_capacity(input.spelling.as_ref().unwrap().len() + 2);
+    with_diagram.push(input.diagram.unwrap());
+    for s in input.spelling.as_ref().unwrap() {
+        with_diagram.push(*s);
+    }
+    with_diagram.push(input.destination.unwrap());
+    unset_seen(&with_diagram)
+        .iter()
+        .map(|h| (harp_notes(*h, 0..=2), harp_notes(*h, 3..=6)))
+        .skip(1)
+        .collect_vec()
 }
+
+pub fn possible_pedals_(input: &CandidateBuilder) -> Vec<Pedals> {
+    let spelling = input.spelling.as_ref().unwrap();
+    let pedals = get_pedal_changes_(input);
+    // trace!("Shifting pedal changes: {pedals:?}",);
+    // trace!("With spelling: {spelling:?}",);
+    shift_pedals(spelling, pedals, input.destination.unwrap())
+}
+
+//////////////////////////////////////////////////////////////////////////////
 
 #[allow(clippy::type_complexity)]
 pub fn shifted_changes(

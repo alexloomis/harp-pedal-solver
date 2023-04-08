@@ -59,6 +59,7 @@ fn kill_barren_children(forest: &mut Forest<Option<Note>>) {
 // Pushes pedals *later*, so pedals and music need to be reversed.
 // music_changes[i] are the pedals and music we currently have at time N-i.
 // Returns changes the right way around again.
+// Expects first entry to be target diagram?
 // TODO: make private, change tests to use shift
 pub fn change_builder(
     music_changes: &[(Vec<Note>, Vec<Note>)],
@@ -81,6 +82,40 @@ pub fn change_builder(
         }
         // If we expect grandchildren, kill barren children.
         if !remaining.is_empty() {
+            // trace!("killin the chillin");
+            kill_barren_children(&mut forest);
+        }
+    }
+    forest
+}
+
+// Pushes pedals *later*, so pedals and music need to be reversed.
+// music_changes[i] are the pedals and music we currently have at time N-i.
+// Returns changes the right way around again.
+// Expects first entry to be target diagram?
+// TODO: make private, change tests to use shift
+pub fn change_builder_(
+    music_changes: &[(Vec<Note>, Vec<Note>)],
+    mut acc: Vec<Note>, // surplus changes getting passed on
+) -> Forest<Option<Note>> {
+    let mut forest = Forest::<Option<Note>>::new();
+    if let Some(((new_music, new_changes), remaining)) =
+        music_changes.split_first()
+    {
+        acc.extend(new_changes);
+        // If we owe more changes than we have slots, there are no solutions.
+        if acc.len() > remaining.len() + 1 {
+            trace!("killing branch with acc {acc:?}");
+            return forest;
+        }
+        if acc.is_empty() {
+            add_none(&mut forest, remaining);
+        } else {
+            make_children(&mut forest, new_music, &acc, remaining);
+        }
+        // If we expect grandchildren, kill barren children.
+        if !remaining.is_empty() {
+            // trace!("killin the chillin");
             kill_barren_children(&mut forest);
         }
     }
@@ -93,11 +128,17 @@ pub fn shift(
 ) -> Vec<Vec<Option<Note>>> {
     let mut vec = vec![];
     for i in (0..music.len()).rev() {
-        vec.push((music[i].to_vec(), changes[i].to_vec()));
+        // vec.push((music[i].to_vec(), changes[i].to_vec()));
+        vec.push((
+            harp_to_notes(notes_to_harp(&music[i])).to_vec(),
+            changes[i].to_vec(),
+        ));
     }
+    trace!("Running builder on {vec:?}");
     unravel_paths(change_builder(&vec, vec![]))
 }
 
+// music is getting respelled before it hits here
 fn shift_pedals_builder(
     music: &[Harp],
     pedals: &[Vec<Note>],
@@ -106,21 +147,28 @@ fn shift_pedals_builder(
     for i in (0..music.len()).rev() {
         vec.push((harp_to_notes(music[i]).to_vec(), pedals[i].to_vec()));
     }
+    trace!("Running builder on {vec:?}");
     unravel_paths(change_builder(&vec, vec![]))
 }
 
 pub fn shift_pedals(
     music: &[Harp],
     pedals: Vec<(Vec<Note>, Vec<Note>)>,
+    goal: Harp,
 ) -> Vec<Pedals> {
+    let mut music = music.to_owned();
+    music.push(goal);
     let mut l = Vec::with_capacity(pedals.len());
     let mut r = Vec::with_capacity(pedals.len());
     for (left, right) in pedals {
         l.push(left);
         r.push(right);
     }
-    let lefts = shift_pedals_builder(music, &l);
-    let rights = shift_pedals_builder(music, &r);
+    // trace!("music: {music:?}");
+    // trace!("r: {r:?}");
+    let lefts = shift_pedals_builder(&music, &l);
+    let rights = shift_pedals_builder(&music, &r);
+    // trace!("rights: {rights:?}");
     lefts
         .into_iter()
         .cartesian_product(rights)

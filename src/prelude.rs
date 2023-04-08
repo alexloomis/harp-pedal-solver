@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 pub use crate::prelude::harp::*;
 pub use crate::prelude::note::*;
 pub use crate::prelude::pitch_class::*;
@@ -36,6 +38,7 @@ pub struct CandidateBuilder {
     pub diagram: Option<Harp>,
     pub destination: Option<Harp>,
     pub spelling: Option<Vec<Harp>>,
+    // Should be one longer than spelling, last is required changes for goal.
     pub pedals: Option<Pedals>,
     pub cost: Option<usize>,
 }
@@ -92,6 +95,7 @@ pub struct Candidate {
     pub diagram: Harp,
     pub destination: Harp,
     pub spelling: Vec<Harp>,
+    // Should be one longer than spelling, last is required changes for goal.
     pub pedals: Vec<(Option<Note>, Option<Note>)>,
     pub cost: usize,
 }
