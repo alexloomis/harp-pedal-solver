@@ -9,5 +9,8 @@ To do:
 - [ ] allow pedal diagrams mid-music?
 - [ ] allow multiple sections per file?
 - [ ] good error handling
-- [ ] give correct enharmonic spellings
-- [ ] give correct pedial diagrams when initially unspecified
+- [x] give correct enharmonic spellings
+- [x] give correct pedial diagrams when initially unspecified
+- [ ] insist on a specific pedal (eg so B and Cb can be used for a bisbig)
+- [ ] fix early placement bugs
+- [ ] fold as much as possible into A\* search, especially early placement
