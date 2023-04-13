@@ -1,10 +1,7 @@
 use crate::cli::CLI;
 use crate::prelude::*;
-use crate::shift::num_shifts;
 
-// TODO: instead of penalizing simultinaity,
-// penalize total displacement required to resolve simultinaity
-pub fn enharmonic_cost(start: Harp, finish: Harp) -> usize {
+pub fn astar_cost(start: Harp, finish: Harp) -> usize {
     let mut out = 0;
     let l_count = num_changes(start, finish, 0..=2);
     let r_count = num_changes(start, finish, 3..=6);
@@ -25,7 +22,7 @@ fn pedal_diff(old: Note, new: Note) -> usize {
     f(old).saturating_sub(f(new)) + f(new).saturating_sub(f(old))
 }
 
-pub fn pedal_cost(new: &[Option<Note>]) -> usize {
+pub fn pedal_cost(new: &[Vec<Note>]) -> usize {
     let mut cost = 0;
     let mut change_cost: usize = 0;
     // Doesn't matter what, since change cost starts at zero.
@@ -34,18 +31,15 @@ pub fn pedal_cost(new: &[Option<Note>]) -> usize {
         modifier: Modifier::Flat,
     };
     for change in new {
-        match change {
-            Some(note) => {
-                cost += change_cost
-                    * pedal_diff(last_note, *note)
-                    * CLI.pedal_diatance_cost;
-                change_cost = CLI.quick_change_cost;
-                last_note = *note;
-            }
-            None => {
-                change_cost =
-                    change_cost.saturating_sub(CLI.quick_change_decay);
-            }
+        if change.is_empty() {
+            change_cost = change_cost.saturating_sub(CLI.quick_change_decay);
+        } else {
+            // TODO: treat multiple changes differently
+            cost += change_cost
+                * pedal_diff(last_note, change[0])
+                * CLI.pedal_diatance_cost;
+            change_cost = CLI.quick_change_cost;
+            last_note = change[0];
         }
     }
     cost
@@ -54,8 +48,4 @@ pub fn pedal_cost(new: &[Option<Note>]) -> usize {
 pub fn pedal_cost_both(pedals: &Pedals) -> usize {
     let (left, right) = unzip_pedals(pedals);
     pedal_cost(&left) + pedal_cost(&right)
-}
-
-pub fn shift_cost(old: &[Vec<Note>]) -> usize {
-    num_shifts(old).saturating_mul(CLI.early_cost)
 }

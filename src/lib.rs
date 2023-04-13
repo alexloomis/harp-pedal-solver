@@ -4,13 +4,12 @@
 
 // pub mod state;
 pub mod assign;
+pub mod astar;
 pub mod candidate;
 pub mod cli;
 pub mod cost;
-pub mod enharmonic;
 pub mod output;
 pub mod parse;
 pub mod prelude;
-pub mod shift;
 pub mod solve;
 pub mod util;

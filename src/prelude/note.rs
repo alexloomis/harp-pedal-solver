@@ -99,3 +99,13 @@ pub fn read_note(string: &str) -> Note {
     };
     Note { name, modifier }
 }
+
+impl Note {
+    pub fn is_left(&self) -> bool {
+        (self.name == Name::D) | (self.name == Name::C) | (self.name == Name::B)
+    }
+
+    pub fn is_right(&self) -> bool {
+        !self.is_left()
+    }
+}

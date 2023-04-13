@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 const SHOW: usize = 3;
 const PEDAL_COST: usize = 100;
-const DOUBLE_CHANGE_COST: usize = 40;
+const DOUBLE_CHANGE_COST: usize = 300;
 const DOUBLE_STRING_COST: usize = 10;
 const CROSS_STRING_COST: usize = 120;
 // How much do we penalize each beat that

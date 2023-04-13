@@ -1,20 +1,15 @@
-use itertools::Itertools;
-use log::{debug, error, info, trace, warn};
+use log::info;
 
 use crate::{
     cost::pedal_cost_both,
     prelude::*,
-    solve::{
-        find_spellings,
-        // possible_pedals,
-        possible_pedals_,
-    },
+    solve::{get_pedal_changes, get_spellings},
 };
 
 pub fn find_candidates(input: &MusicInput) -> Vec<Candidate> {
     info!("Managing enharmonic spellings...");
-    let spellings = find_spellings(input);
-    let mut with_spelling: Vec<CandidateBuilder> =
+    let spellings = get_spellings(input);
+    let mut candidates: Vec<CandidateBuilder> =
         Vec::with_capacity(spellings.len());
     for s in spellings {
         let mut candidate = CandidateBuilder::new();
@@ -30,26 +25,11 @@ pub fn find_candidates(input: &MusicInput) -> Vec<Candidate> {
             input.goal,
         ));
         candidate.set_spelling(s);
-        with_spelling.push(candidate);
+        candidate.set_pedals(get_pedal_changes(&candidate));
+        // candidate.refine_spelling(input);
+        candidates.push(candidate);
     }
 
-    info!("Breaking up simultaneous pedal changes...");
-    let mut with_pedals = Vec::with_capacity(with_spelling.len());
-    for c in with_spelling {
-        let mut candidates = vec![];
-        for p in
-            // possible_pedals(c.diagram.unwrap(), c.spelling.as_ref().unwrap())
-            possible_pedals_(&c)
-        {
-            trace!("Found possibility: {:?}", p);
-            let mut new = c.clone();
-            new.set_pedals(p);
-            candidates.push(new);
-        }
-        with_pedals.push(candidates);
-    }
-    let candidates: Vec<CandidateBuilder> =
-        with_pedals.into_iter().flatten().collect_vec();
     let mut out = Vec::with_capacity(candidates.len());
     for mut c in candidates {
         let cost = pedal_cost_both(c.pedals.as_ref().unwrap());

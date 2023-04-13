@@ -67,15 +67,9 @@ pub fn idx_to_note(idx: usize, val: u8) -> Option<Note> {
     })
 }
 
-// pub fn idx_to_note(harp: Harp, i: usize) -> Option<Note> {
-//     match harp.get(i) {
-//         Some(u) => u8_to_modifier(*u).map(|m| Note {
-//             name: usize_to_name(i),
-//             modifier: m,
-//         }),
-//         None => None,
-//     }
-// }
+pub fn set_pedal(harp: &mut Harp, note: Note) {
+    harp[name_to_usize(note.name)] = modifier_to_u8(note.modifier);
+}
 
 pub fn notes_to_harp(notes: &[Note]) -> Harp {
     let mut out = [0; 7];
@@ -187,5 +181,29 @@ pub fn num_same(state: Harp) -> usize {
     pitches.len() - pitches.iter().map(|n| note_to_pc(*n)).unique().count()
 }
 
-// pub const LEFT: [Name; 3] = [Name::D, Name::C, Name::B];
-// pub const RIGHT: [Name; 4] = [Name::E, Name::F, Name::G, Name::A];
+// Essentially, ([E, F, G], [E, F#, A]) -> F#
+pub fn get_pedal_changes(state: Harp, target: Harp) -> (Vec<Note>, Vec<Note>) {
+    let mut left_shifts = Vec::with_capacity(3);
+    for (i, pedal) in target[..=2].iter().enumerate() {
+        if state[i] != *pedal {
+            if let Some(note) = idx_to_note(i, *pedal) {
+                left_shifts.push(note)
+            }
+        }
+    }
+    let mut right_shifts = Vec::with_capacity(4);
+    for (i, pedal) in target[3..].iter().enumerate() {
+        if state[i] != *pedal {
+            if let Some(note) = idx_to_note(i, *pedal) {
+                right_shifts.push(note)
+            }
+        }
+    }
+    (left_shifts, right_shifts)
+}
+
+pub fn is_change(state: Harp, note: Note) -> bool {
+    let idx = name_to_usize(note.name);
+    let m = modifier_to_u8(note.modifier);
+    !(state[idx] == 0 || state[idx] == m)
+}

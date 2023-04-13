@@ -15,16 +15,18 @@ pub mod harp;
 pub mod note;
 pub mod pitch_class;
 
-pub type Pedals = Vec<(Option<Note>, Option<Note>)>;
+pub type Pedals = Vec<Vec<Note>>;
 
-pub fn unzip_pedals(pedals: &Pedals) -> (Vec<Option<Note>>, Vec<Option<Note>>) {
-    let mut left = Vec::with_capacity(pedals.len());
-    let mut right = Vec::with_capacity(pedals.len());
-    for (l, r) in pedals {
-        left.push(*l);
-        right.push(*r);
-    }
-    (left, right)
+pub fn unzip_pedals(pedals: &Pedals) -> (Pedals, Pedals) {
+    let lefts = pedals
+        .iter()
+        .map(|v| v.iter().filter(|n| n.is_left()).copied().collect_vec())
+        .collect_vec();
+    let rights = pedals
+        .iter()
+        .map(|v| v.iter().filter(|n| n.is_right()).copied().collect_vec())
+        .collect_vec();
+    (lefts, rights)
 }
 
 pub struct MusicInput {
@@ -74,6 +76,22 @@ impl CandidateBuilder {
         self.cost = Some(cost);
     }
 
+    pub fn refine_spelling(&mut self, input: &MusicInput) {
+        for s in self.spelling.iter_mut() {
+            // For each beat
+            for (i, m) in input.music.iter().enumerate() {
+                // For each pitch
+                for (j, d) in s[i].iter_mut().enumerate() {
+                    if let Some(note) = idx_to_note(j, *d) {
+                        if !m.contains(&note_to_pc(note)) {
+                            *d = 0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     pub fn try_init(self) -> Option<Candidate> {
         Some(Candidate {
             diagram: self.diagram?,
@@ -96,6 +114,6 @@ pub struct Candidate {
     pub destination: Harp,
     pub spelling: Vec<Harp>,
     // Should be one longer than spelling, last is required changes for goal.
-    pub pedals: Vec<(Option<Note>, Option<Note>)>,
+    pub pedals: Pedals,
     pub cost: usize,
 }
