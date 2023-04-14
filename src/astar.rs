@@ -6,6 +6,7 @@ use log::trace;
 use pathfinding::directed::astar::{astar_bag, AstarSolution};
 use std::iter;
 
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct AstarState {
     pub pedals: Harp,
     // (last_note, change_cost)
@@ -49,6 +50,70 @@ impl AstarState {
             }
         }
     }
+}
+
+// pub fn possibilities_<R>(state: Harp, target: Harp, range: R)
+// where
+//     R: std::ops::RangeBounds<usize>
+//         + std::iter::IntoIterator<Item = usize>
+//         + std::slice::SliceIndex<[u8]>,
+// {
+//     let default_new = update_harp(state, target);
+//     let mut out = vec![(default_new, None)];
+//     let changes = harp_changes(state, target, 0..=2);
+//     match &changes[..] {
+//         // Can change a single pedal, if undetermined
+//         [] => {
+//             for j in range {
+//                 if target[j] == 0 {
+//                     for new in 1..=3 {
+//                         if default_new[j] != new {
+//                             let mut new_setting = default_new[range];
+//                             new_setting[j] = new;
+//                             out.push(new_setting);
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//         // Must change the given pedal
+//         [_] => (),
+//         _ => {
+//             return vec![];
+//         }
+//     }
+//     // out
+// }
+
+fn targets(state: AstarState, target: Harp) -> Vec<AstarState> {
+    let default_new = update_harp(state.pedals, target);
+    let l_changes = harp_changes(state.pedals, target, 0..=2);
+    let mut new_lefts: Vec<[u8; 3]> =
+        vec![default_new[0..=2].try_into().unwrap()];
+    match &l_changes[..] {
+        // Can change a single pedal, if undetermined
+        [] => {
+            for (j, n) in target[0..=2].iter().enumerate() {
+                if *n == 0 {
+                    for new in 1..=3 {
+                        if default_new[j] != new {
+                            let mut new_left: [u8; 3] =
+                                default_new[0..=2].try_into().unwrap();
+                            new_left[j] = new;
+                            new_lefts.push(new_left);
+                        }
+                    }
+                }
+            }
+        }
+        // Must change the given pedal
+        [_] => (),
+        _ => {
+            return vec![];
+        }
+    }
+    let r_changes = harp_changes(state.pedals, target, 3..=6);
+    unimplemented!()
 }
 
 fn possibilities(state: Harp) -> Vec<Harp> {

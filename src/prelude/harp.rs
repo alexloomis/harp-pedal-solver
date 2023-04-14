@@ -1,4 +1,4 @@
-use crate::prelude::{note_to_pc, pedal_symbol_opt, Modifier, Name, Note};
+use crate::prelude::{note_to_pc, pedal_symbol_opt, Accidental, Name, Note};
 use itertools::Itertools;
 
 // Index 0 is D, 1 is C, etc. (see pedal_to_u8)
@@ -42,20 +42,20 @@ fn usize_to_name(u: usize) -> Name {
     }
 }
 
-fn modifier_to_u8(modifier: Modifier) -> u8 {
+fn modifier_to_u8(modifier: Accidental) -> u8 {
     match modifier {
-        Modifier::Flat => 1,
-        Modifier::Natural => 2,
-        Modifier::Sharp => 3,
+        Accidental::Flat => 1,
+        Accidental::Natural => 2,
+        Accidental::Sharp => 3,
     }
 }
 
-fn u8_to_modifier(u: u8) -> Option<Modifier> {
+fn u8_to_modifier(u: u8) -> Option<Accidental> {
     match u {
         0 => None,
-        1 => Some(Modifier::Flat),
-        2 => Some(Modifier::Natural),
-        3 => Some(Modifier::Sharp),
+        1 => Some(Accidental::Flat),
+        2 => Some(Accidental::Natural),
+        3 => Some(Accidental::Sharp),
         x => panic!("Invalid modifier {x}"),
     }
 }
@@ -143,6 +143,20 @@ pub fn unset_seen(harps: &[Harp]) -> Vec<Harp> {
         }
         out.push(new);
         state = update_harp(state, new);
+    }
+    out
+}
+
+pub fn harp_changes<R>(start: Harp, finish: Harp, range: R) -> Vec<(usize, u8)>
+where
+    R: std::ops::RangeBounds<usize> + std::iter::IntoIterator<Item = usize>,
+{
+    let mut out = Vec::with_capacity(7);
+    for i in range {
+        // If both start[i] and finish[i] are defined, and they differ
+        if start[i] * finish[i] != 0 && start[i] != finish[i] {
+            out.push((i, finish[i]))
+        }
     }
     out
 }

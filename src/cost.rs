@@ -28,7 +28,7 @@ pub fn pedal_cost(new: &[Vec<Note>]) -> usize {
     // Doesn't matter what, since change cost starts at zero.
     let mut last_note = Note {
         name: Name::C,
-        modifier: Modifier::Flat,
+        modifier: Accidental::Flat,
     };
     for change in new {
         if change.is_empty() {

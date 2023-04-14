@@ -20,13 +20,13 @@ fn add_measure(contents: &mut Vec<String>, measure: Measure) {
         for note in beat {
             new_line.push_str(&note.name.to_string().to_lowercase());
             match note.modifier {
-                Modifier::Flat => {
+                Accidental::Flat => {
                     new_line.push_str("es ");
                 }
-                Modifier::Natural => {
+                Accidental::Natural => {
                     new_line.push(' ');
                 }
-                Modifier::Sharp => {
+                Accidental::Sharp => {
                     new_line.push_str("is ");
                 }
             }

@@ -1,4 +1,4 @@
-use crate::prelude::{Harp, Modifier, Name, Note};
+use crate::prelude::{Accidental, Harp, Name, Note};
 use itertools::Itertools;
 use nom::{
     character::complete::{
@@ -72,12 +72,12 @@ fn pitch(s: &str) -> IResult<&str, Name> {
 }
 
 // Accepts a pitch modifier, returns the modifier.
-fn modifier(s: &str) -> IResult<&str, Modifier> {
+fn modifier(s: &str) -> IResult<&str, Accidental> {
     let (rem, c) = one_of("fb♭n♮s#♯")(s)?;
     let modif = match c {
-        'f' | 'b' | '♭' => Modifier::Flat,
-        'n' | '♮' => Modifier::Natural,
-        's' | '#' | '♯' => Modifier::Sharp,
+        'f' | 'b' | '♭' => Accidental::Flat,
+        'n' | '♮' => Accidental::Natural,
+        's' | '#' | '♯' => Accidental::Sharp,
         _ => unreachable!(),
     };
     Ok((rem, modif))
@@ -89,7 +89,7 @@ fn note(s: &str) -> IResult<&str, Note> {
     let (rem, m) = opt(modifier)(rem)?;
     let modifier = match m {
         Some(x) => x,
-        None => Modifier::Natural,
+        None => Accidental::Natural,
     };
     Ok((rem, Note { name, modifier }))
 }
