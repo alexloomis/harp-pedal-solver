@@ -14,14 +14,14 @@ pub fn find_candidates(input: &MusicInput) -> Vec<Candidate> {
     for s in spellings {
         let mut candidate = CandidateBuilder::new();
         candidate.set_diagram(update_harp(
-            [1; 7],
+            [Some(Flat); 7],
             update_harp(
                 input.goal,
                 update_harp(full_initial(&s), input.diagram),
             ),
         ));
         candidate.set_destination(update_harp(
-            update_harp([1; 7], update_harps(input.diagram, &s)),
+            update_harp([Some(Flat); 7], update_harps(input.diagram, &s)),
             input.goal,
         ));
         candidate.set_spelling(s);

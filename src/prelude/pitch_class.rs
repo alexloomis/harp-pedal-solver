@@ -23,7 +23,7 @@ fn modifier_to_u8(modifier: Accidental) -> u8 {
 }
 
 pub fn note_to_pc(note: Note) -> PitchClass {
-    (name_to_u8(note.name) + modifier_to_u8(note.modifier)) % 12
+    (name_to_u8(note.name) + modifier_to_u8(note.accidental)) % 12
 }
 
 pub fn pc_to_notes(pc: PitchClass) -> Vec<Note> {

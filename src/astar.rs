@@ -88,18 +88,18 @@ impl AstarState {
 fn targets(state: AstarState, target: Harp) -> Vec<AstarState> {
     let default_new = update_harp(state.pedals, target);
     let l_changes = harp_changes(state.pedals, target, 0..=2);
-    let mut new_lefts: Vec<[u8; 3]> =
+    let mut new_lefts: Vec<[Option<Accidental>; 3]> =
         vec![default_new[0..=2].try_into().unwrap()];
     match &l_changes[..] {
         // Can change a single pedal, if undetermined
         [] => {
             for (j, n) in target[0..=2].iter().enumerate() {
-                if *n == 0 {
-                    for new in 1..=3 {
-                        if default_new[j] != new {
-                            let mut new_left: [u8; 3] =
+                if n.is_none() {
+                    for new in [Flat, Natural, Sharp] {
+                        if default_new[j] != Some(new) {
+                            let mut new_left: [Option<Accidental>; 3] =
                                 default_new[0..=2].try_into().unwrap();
-                            new_left[j] = new;
+                            new_left[j] = Some(new);
                             new_lefts.push(new_left);
                         }
                     }
@@ -117,9 +117,12 @@ fn targets(state: AstarState, target: Harp) -> Vec<AstarState> {
 }
 
 fn possibilities(state: Harp) -> Vec<Harp> {
-    let mut choices = iter::repeat(vec![1, 2, 3]).take(7).collect_vec();
+    let mut choices =
+        iter::repeat(vec![Some(Flat), Some(Natural), Some(Sharp)])
+            .take(7)
+            .collect_vec();
     for (i, m) in state.iter().enumerate() {
-        if *m != 0 {
+        if m.is_some() {
             choices[i] = vec![*m];
         }
     }
@@ -129,7 +132,7 @@ fn possibilities(state: Harp) -> Vec<Harp> {
         .map(|c| c.into_iter())
         .multi_cartesian_product()
     {
-        let mut new = [0; 7];
+        let mut new = [None; 7];
         for (i, c) in v.iter().enumerate() {
             new[i] = *c;
         }

@@ -19,7 +19,7 @@ fn add_measure(contents: &mut Vec<String>, measure: Measure) {
         }
         for note in beat {
             new_line.push_str(&note.name.to_string().to_lowercase());
-            match note.modifier {
+            match note.accidental {
                 Accidental::Flat => {
                     new_line.push_str("es ");
                 }

@@ -59,14 +59,14 @@ fn main() {
     let measure_lengths = mid.iter().map(|v| v.len());
 
     let music_input = MusicInput {
-        diagram: start.unwrap_or([0; 7]),
+        diagram: start.unwrap_or([None; 7]),
         music: mid
             .clone()
             .into_iter()
             .flatten()
             .map(|v| v.into_iter().map(note_to_pc).collect_vec())
             .collect_vec(),
-        goal: end.unwrap_or([0; 7]),
+        goal: end.unwrap_or([None; 7]),
     };
 
     let mut candidates = find_candidates(&music_input);

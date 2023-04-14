@@ -61,18 +61,18 @@ pub fn pedal_symbol_opt(modifier: Option<Accidental>) -> char {
 #[derive(Copy, Clone, Eq, Hash, PartialEq)]
 pub struct Note {
     pub name: Name,
-    pub modifier: Accidental,
+    pub accidental: Accidental,
 }
 
 impl fmt::Debug for Note {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", self.name, self.modifier)
+        write!(f, "{}{}", self.name, self.accidental)
     }
 }
 
 impl fmt::Display for Note {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", self.name, self.modifier)
+        write!(f, "{}{}", self.name, self.accidental)
     }
 }
 
@@ -97,7 +97,10 @@ pub fn read_note(string: &str) -> Note {
         Some('s' | '#' | '♯') => Accidental::Sharp,
         Some(x) => panic!("Invalid modifier {x}"),
     };
-    Note { name, modifier }
+    Note {
+        name,
+        accidental: modifier,
+    }
 }
 
 impl Note {

@@ -4,6 +4,8 @@ pub use crate::prelude::harp::*;
 pub use crate::prelude::note::*;
 pub use crate::prelude::pitch_class::*;
 
+pub use note::Accidental::*;
+
 // The ways of storing notes are
 // Note - a single note suitable for human readability,
 // or if enharmonics should be treated differently.
@@ -84,7 +86,7 @@ impl CandidateBuilder {
                 for (j, d) in s[i].iter_mut().enumerate() {
                     if let Some(note) = idx_to_note(j, *d) {
                         if !m.contains(&note_to_pc(note)) {
-                            *d = 0;
+                            *d = None;
                         }
                     }
                 }
