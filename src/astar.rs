@@ -9,7 +9,7 @@ use std::iter;
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct AstarState {
     pub pedals: Harp,
-    // (last_note, change_cost)
+    // (last note, cost to change from here)
     pub last_left: Option<(Note, usize)>,
     pub last_right: Option<(Note, usize)>,
     pub beat: usize,
@@ -55,7 +55,6 @@ impl AstarState {
 // What changes can we make with our left foot?
 // None means changing nothing is an option, empty means there are no options.
 fn left_targets(state: AstarState, target: Harp) -> Vec<Option<Note>> {
-    let default_new = update_harp(state.pedals, target)[0..=2].to_vec();
     let l_changes = harp_changes(state.pedals, target, 0..=2);
     match &l_changes[..] {
         // Can change a single pedal, if undetermined
@@ -64,7 +63,7 @@ fn left_targets(state: AstarState, target: Harp) -> Vec<Option<Note>> {
             for (j, n) in target[0..=2].iter().enumerate() {
                 if n.is_none() {
                     for new in [Some(Flat), Some(Natural), Some(Sharp)] {
-                        if default_new[j] != new {
+                        if state.pedals[j] != new {
                             new_lefts.push(idx_to_note(j, new));
                         }
                     }

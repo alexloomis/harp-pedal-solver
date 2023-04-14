@@ -70,7 +70,7 @@ fn main() {
     };
 
     let mut candidates = find_candidates(&music_input);
-    candidates.sort_by(|x, y| x.cost.cmp(&y.cost));
+    // candidates.sort_by(|x, y| x.cost.cmp(&y.cost));
 
     if !candidates.is_empty() {
         info!("Found {} possibilities...", candidates.len());

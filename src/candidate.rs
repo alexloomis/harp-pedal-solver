@@ -1,7 +1,6 @@
 use log::info;
 
 use crate::{
-    cost::pedal_cost_both,
     prelude::*,
     solve::{get_pedal_changes, get_spellings},
 };
@@ -32,8 +31,8 @@ pub fn find_candidates(input: &MusicInput) -> Vec<Candidate> {
 
     let mut out = Vec::with_capacity(candidates.len());
     for mut c in candidates {
-        let cost = pedal_cost_both(c.pedals.as_ref().unwrap());
-        c.set_cost(cost);
+        // let cost = pedal_cost_both(c.pedals.as_ref().unwrap());
+        c.set_cost(0);
         if let Some(new) = c.try_init() {
             out.push(new)
         }

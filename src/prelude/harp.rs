@@ -56,7 +56,7 @@ pub fn set_pedal(harp: &mut Harp, note: Note) {
 pub fn notes_to_harp(notes: &[Note]) -> Harp {
     let mut out = [None; 7];
     for note in notes {
-        out[name_to_usize(note.name)] = Some(note.accidental);
+        set_pedal(&mut out, *note);
     }
     out
 }
@@ -117,10 +117,10 @@ pub fn unset_seen(harps: &[Harp]) -> Vec<Harp> {
     out.push(state);
     for harp in harps[1..].iter() {
         let mut new = [None; 7];
-        for j in 0..=6 {
+        for (j, new_note) in harp.iter().enumerate() {
             // If the value at j is set and is new
-            if harp[j].is_some() && state[j].is_some() {
-                new[j] = harp[j];
+            if new_note.is_some() && state[j] != *new_note {
+                new[j] = *new_note;
             }
         }
         out.push(new);
