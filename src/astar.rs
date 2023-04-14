@@ -1,5 +1,5 @@
 use crate::cli::CLI;
-use crate::cost::astar_cost;
+use crate::cost::{astar_cost, astar_heuristic};
 use crate::prelude::*;
 use itertools::Itertools;
 use log::trace;
@@ -52,71 +52,133 @@ impl AstarState {
     }
 }
 
-// pub fn possibilities_<R>(state: Harp, target: Harp, range: R)
-// where
-//     R: std::ops::RangeBounds<usize>
-//         + std::iter::IntoIterator<Item = usize>
-//         + std::slice::SliceIndex<[u8]>,
-// {
-//     let default_new = update_harp(state, target);
-//     let mut out = vec![(default_new, None)];
-//     let changes = harp_changes(state, target, 0..=2);
-//     match &changes[..] {
-//         // Can change a single pedal, if undetermined
-//         [] => {
-//             for j in range {
-//                 if target[j] == 0 {
-//                     for new in 1..=3 {
-//                         if default_new[j] != new {
-//                             let mut new_setting = default_new[range];
-//                             new_setting[j] = new;
-//                             out.push(new_setting);
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//         // Must change the given pedal
-//         [_] => (),
-//         _ => {
-//             return vec![];
-//         }
-//     }
-//     // out
-// }
-
-fn targets(state: AstarState, target: Harp) -> Vec<AstarState> {
-    let default_new = update_harp(state.pedals, target);
+// What changes can we make with our left foot?
+// None means changing nothing is an option, empty means there are no options.
+fn left_targets(state: AstarState, target: Harp) -> Vec<Option<Note>> {
+    let default_new = update_harp(state.pedals, target)[0..=2].to_vec();
     let l_changes = harp_changes(state.pedals, target, 0..=2);
-    let mut new_lefts: Vec<[Option<Accidental>; 3]> =
-        vec![default_new[0..=2].try_into().unwrap()];
     match &l_changes[..] {
         // Can change a single pedal, if undetermined
         [] => {
+            let mut new_lefts = vec![];
             for (j, n) in target[0..=2].iter().enumerate() {
                 if n.is_none() {
-                    for new in [Flat, Natural, Sharp] {
-                        if default_new[j] != Some(new) {
-                            let mut new_left: [Option<Accidental>; 3] =
-                                default_new[0..=2].try_into().unwrap();
-                            new_left[j] = Some(new);
-                            new_lefts.push(new_left);
+                    for new in [Some(Flat), Some(Natural), Some(Sharp)] {
+                        if default_new[j] != new {
+                            new_lefts.push(idx_to_note(j, new));
                         }
                     }
                 }
             }
+            new_lefts.push(None);
+            new_lefts
         }
         // Must change the given pedal
-        [_] => (),
+        [n] => {
+            vec![Some(*n)]
+        }
         _ => {
-            return vec![];
+            vec![]
         }
     }
-    let r_changes = harp_changes(state.pedals, target, 3..=6);
-    unimplemented!()
 }
 
-fn possibilities(state: Harp) -> Vec<Harp> {
+fn right_targets(state: AstarState, target: Harp) -> Vec<Option<Note>> {
+    let default_new = update_harp(state.pedals, target)[3..=6].to_vec();
+    let r_changes = harp_changes(state.pedals, target, 3..=6);
+    match &r_changes[..] {
+        // Can change a single pedal, if undetermined
+        [] => {
+            let mut new_rights = vec![];
+            for (j, n) in target[3..=6].iter().enumerate() {
+                if n.is_none() {
+                    for new in [Some(Flat), Some(Natural), Some(Sharp)] {
+                        if default_new[j] != new {
+                            new_rights.push(idx_to_note(j, new));
+                        }
+                    }
+                }
+            }
+            new_rights.push(None);
+            new_rights
+        }
+        // Must change the given pedal
+        [n] => {
+            vec![Some(*n)]
+        }
+        _ => {
+            vec![]
+        }
+    }
+}
+
+fn get_targets(state: AstarState, target: Harp) -> Vec<AstarState> {
+    let mut out: Vec<AstarState> = vec![];
+    let l_changes = left_targets(state, target);
+    let r_changes = right_targets(state, target);
+    for (left, right) in l_changes.into_iter().cartesian_product(r_changes) {
+        let mut new_state = state;
+        new_state.advance(left, right);
+        out.push(new_state);
+    }
+    out
+}
+
+fn target_costs(
+    state: AstarState,
+    targets: &[Harp],
+) -> Vec<(AstarState, usize)> {
+    let mut out = vec![];
+    for target in targets {
+        out.append(
+            &mut get_targets(state, *target)
+                .into_iter()
+                .map(|t| (t, astar_cost(state, t)))
+                .collect_vec(),
+        )
+    }
+    out
+}
+
+fn succ(
+    state: AstarState,
+    mid: &[Vec<Harp>],
+    end: Harp,
+) -> Vec<(AstarState, usize)> {
+    let i = state.beat;
+    if i < mid.len() {
+        target_costs(state, &mid[i])
+    } else if i == mid.len() {
+        target_costs(state, &[end])
+    } else {
+        vec![]
+    }
+}
+
+fn min_score_via_astar(
+    start: Harp,
+    mid: &[Vec<Harp>],
+    end: Harp,
+) -> Option<(AstarSolution<AstarState>, usize)> {
+    astar_bag(
+        // Initial state is (start, 0)
+        &AstarState {
+            pedals: start,
+            last_left: None,
+            last_right: None,
+            beat: 0,
+        },
+        // Given we are at (s, i), where can we go?
+        |&state| succ(state, mid, end),
+        // Heuristic giving a lower bound on the distance p to end
+        |&state| astar_heuristic(state, end),
+        // success
+        |&state| state.beat > mid.len(),
+    )
+}
+
+// TODO: read through sober and check for bugs
+fn possible_starts(state: Harp) -> Vec<Harp> {
     let mut choices =
         iter::repeat(vec![Some(Flat), Some(Natural), Some(Sharp)])
             .take(7)
@@ -141,85 +203,14 @@ fn possibilities(state: Harp) -> Vec<Harp> {
     out
 }
 
-// Change at most one note per foot. Assumes state is fully determined.
-// If things are slow, this is a likely culprit.
-fn valid_targets(_state: Harp, target: Harp) -> Vec<Harp> {
-    // let n_left = num_changes(state, target, 0..=2);
-    // let n_right = num_changes(state, target, 3..=6);
-    // if n_left > 1 || n_right > 1 {
-    //     return vec![];
-    // }
-    possibilities(target)
-    // .into_iter()
-    // .filter(|t| {
-    //     num_changes(state, *t, 0..=2) <= 1
-    //         && num_changes(state, *t, 3..=6) <= 1
-    // })
-    // .collect_vec()
-}
-
-fn target_costs(state: Harp, targets: &[Harp]) -> Vec<(Harp, usize)> {
-    let mut out = vec![];
-    for target in targets {
-        out.append(
-            &mut valid_targets(state, *target)
-                .into_iter()
-                .map(|t| (t, astar_cost(state, t)))
-                .collect_vec(),
-        )
-    }
-    out
-}
-
-fn succ(
-    state: Harp,
-    i: usize,
-    mid: &[Vec<Harp>],
-    end: Harp,
-) -> Vec<((Harp, usize), usize)> {
-    if i < mid.len() {
-        trace!("i< = {i}");
-        target_costs(state, &mid[i])
-            .into_iter()
-            .map(|(s, c)| ((s, i + 1), c))
-            .collect_vec()
-    } else if i == mid.len() {
-        trace!("i= = {i}");
-        target_costs(state, &[end])
-            .into_iter()
-            .map(|(s, c)| ((s, i + 1), c))
-            .collect_vec()
-    } else {
-        trace!("i> = {i}");
-        vec![]
-    }
-}
-
-fn min_score_via_astar(
+pub fn find_solutions(
     start: Harp,
     mid: &[Vec<Harp>],
     end: Harp,
-) -> Option<(AstarSolution<(Harp, usize)>, usize)> {
-    astar_bag(
-        // Initial state is (start, 0)
-        &(start, 0),
-        // Given we are at (s, i), where can we go?
-        |&(state, i)| succ(state, i, mid, end),
-        // Heuristic giving a lower bound on the distance p to end
-        |&(state, _)| astar_cost(state, end),
-        // success
-        |&(_, i)| i > mid.len(),
-    )
-}
-
-pub fn find_spelling(
-    start: Harp,
-    mid: &[Vec<Harp>],
-    end: Harp,
-) -> Vec<Vec<Harp>> {
+) -> Vec<Vec<AstarState>> {
     let mut best_score = usize::MAX;
     let mut best_choice = vec![];
-    for s in possibilities(start) {
+    for s in possible_starts(start) {
         if let Some((astar, score)) = min_score_via_astar(s, mid, end) {
             if score < best_score {
                 best_score = score;
@@ -233,7 +224,7 @@ pub fn find_spelling(
     let mut out = vec![];
     for mut path in best_choice {
         path.pop();
-        out.push(path.into_iter().skip(1).map(|x| x.0).collect_vec());
+        out.push(path.into_iter().skip(1).collect_vec());
     }
     out
 }

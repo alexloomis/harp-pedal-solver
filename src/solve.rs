@@ -2,7 +2,7 @@
 use itertools::Itertools;
 
 use crate::assign::assign;
-use crate::astar::find_spelling;
+use crate::astar::find_solutions;
 use crate::prelude::*;
 
 // Refine may not work as intended when there's eg B and Cb simultaneously
@@ -14,7 +14,10 @@ pub fn get_spellings(input: &MusicInput) -> Vec<Vec<Harp>> {
         .iter()
         .map(|p| assign(p))
         .collect::<Vec<Vec<Harp>>>();
-    find_spelling(start, &mid, end)
+    find_solutions(start, &mid, end)
+        .into_iter()
+        .map(|v| v.into_iter().map(|a| a.pedals).collect_vec())
+        .collect_vec()
 }
 
 // result is one longer than spelling

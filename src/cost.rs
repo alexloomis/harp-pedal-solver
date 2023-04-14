@@ -1,7 +1,10 @@
+use crate::astar::AstarState;
 use crate::cli::CLI;
 use crate::prelude::*;
 
-pub fn astar_cost(start: Harp, finish: Harp) -> usize {
+pub fn astar_cost(state: AstarState, target: AstarState) -> usize {
+    let start = state.pedals;
+    let finish = target.pedals;
     let mut out = 0;
     let l_count = num_changes(start, finish, 0..=2);
     let r_count = num_changes(start, finish, 3..=6);
@@ -15,6 +18,10 @@ pub fn astar_cost(start: Harp, finish: Harp) -> usize {
     out += CLI.double_string_cost * num_same(finish);
     out += CLI.cross_string_cost * num_crossed(finish);
     out
+}
+
+pub fn astar_heuristic(state: AstarState, end: Harp) -> usize {
+    unimplemented!()
 }
 
 fn pedal_diff(old: Note, new: Note) -> usize {
