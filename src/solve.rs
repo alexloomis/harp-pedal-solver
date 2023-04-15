@@ -5,7 +5,6 @@ use crate::assign::assign;
 use crate::astar::find_solutions;
 use crate::prelude::*;
 
-// Refine may not work as intended when there's eg B and Cb simultaneously
 pub fn get_spellings(input: &MusicInput) -> Vec<Vec<Harp>> {
     let start = input.diagram;
     let end = input.goal;

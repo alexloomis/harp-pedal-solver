@@ -2,7 +2,6 @@ use crate::cli::CLI;
 use crate::cost::{astar_cost, astar_heuristic};
 use crate::prelude::*;
 use itertools::Itertools;
-use log::trace;
 use pathfinding::directed::astar::{astar_bag, AstarSolution};
 use std::iter;
 
@@ -29,6 +28,15 @@ fn advance_memory(m: Option<(Note, usize)>) -> Option<(Note, usize)> {
 }
 
 impl AstarState {
+    pub fn new(pedals: Harp) -> AstarState {
+        AstarState {
+            pedals,
+            last_left: None,
+            last_right: None,
+            beat: 0,
+        }
+    }
+
     pub fn advance(&mut self, left: Option<Note>, right: Option<Note>) {
         self.beat += 1;
         match left {
@@ -83,7 +91,6 @@ fn left_targets(state: AstarState, target: Harp) -> Vec<Option<Note>> {
 }
 
 fn right_targets(state: AstarState, target: Harp) -> Vec<Option<Note>> {
-    let default_new = update_harp(state.pedals, target)[3..=6].to_vec();
     let r_changes = harp_changes(state.pedals, target, 3..=6);
     match &r_changes[..] {
         // Can change a single pedal, if undetermined
@@ -92,7 +99,7 @@ fn right_targets(state: AstarState, target: Harp) -> Vec<Option<Note>> {
             for (j, n) in target[3..=6].iter().enumerate() {
                 if n.is_none() {
                     for new in [Some(Flat), Some(Natural), Some(Sharp)] {
-                        if default_new[j] != new {
+                        if state.pedals[j] != new {
                             new_rights.push(idx_to_note(j, new));
                         }
                     }
@@ -160,14 +167,9 @@ fn min_score_via_astar(
     end: Harp,
 ) -> Option<(AstarSolution<AstarState>, usize)> {
     astar_bag(
-        // Initial state is (start, 0)
-        &AstarState {
-            pedals: start,
-            last_left: None,
-            last_right: None,
-            beat: 0,
-        },
-        // Given we are at (s, i), where can we go?
+        // Initial state
+        &AstarState::new(start),
+        // Given we are at state, where can we go?
         |&state| succ(state, mid, end),
         // Heuristic giving a lower bound on the distance p to end
         |&state| astar_heuristic(state, end),
@@ -176,7 +178,6 @@ fn min_score_via_astar(
     )
 }
 
-// TODO: read through sober and check for bugs
 fn possible_starts(state: Harp) -> Vec<Harp> {
     let mut choices =
         iter::repeat(vec![Some(Flat), Some(Natural), Some(Sharp)])
@@ -217,7 +218,6 @@ pub fn find_solutions(
             } else if score == best_score {
                 best_choice.append(&mut astar.into_iter().collect_vec());
             }
-            trace!("found one");
         }
     }
     let mut out = vec![];
