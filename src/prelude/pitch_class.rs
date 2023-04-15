@@ -1,4 +1,4 @@
-use crate::prelude::{read_note, Modifier, Name, Note};
+use crate::prelude::{read_note, Accidental, Name, Note};
 // 0 is Ab, 1 is A, etc.
 pub type PitchClass = u8;
 
@@ -14,16 +14,16 @@ fn name_to_u8(name: Name) -> u8 {
     }
 }
 
-fn modifier_to_u8(modifier: Modifier) -> u8 {
+fn modifier_to_u8(modifier: Accidental) -> u8 {
     match modifier {
-        Modifier::Flat => 0,
-        Modifier::Natural => 1,
-        Modifier::Sharp => 2,
+        Accidental::Flat => 0,
+        Accidental::Natural => 1,
+        Accidental::Sharp => 2,
     }
 }
 
 pub fn note_to_pc(note: Note) -> PitchClass {
-    (name_to_u8(note.name) + modifier_to_u8(note.modifier)) % 12
+    (name_to_u8(note.name) + modifier_to_u8(note.accidental)) % 12
 }
 
 pub fn pc_to_notes(pc: PitchClass) -> Vec<Note> {

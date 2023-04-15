@@ -1,4 +1,4 @@
-use crate::prelude::{Harp, Modifier, Name, Note};
+use crate::prelude::*;
 use itertools::Itertools;
 use nom::{
     character::complete::{
@@ -28,13 +28,13 @@ fn newline(s: &str) -> IResult<&str, ()> {
 }
 
 // Accepts a pedal setting, returns the appropriate u8 representing it.
-fn pedal_setting(s: &str) -> IResult<&str, u8> {
+fn pedal_setting(s: &str) -> IResult<&str, Option<Accidental>> {
     let (rem, c) = one_of("~^-v")(s)?;
     let setting = match c {
-        '~' => 0,
-        '^' => 1,
-        '-' => 2,
-        'v' => 3,
+        '~' => None,
+        '^' => Some(Flat),
+        '-' => Some(Natural),
+        'v' => Some(Sharp),
         _ => unreachable!(),
     };
     Ok((rem, setting))
@@ -45,7 +45,7 @@ fn diagram(s: &str) -> IResult<&str, Harp> {
     let (rem, left) = count(pedal_setting, 3)(s)?;
     let (rem, _) = char('|')(rem)?;
     let (rem, right) = count(pedal_setting, 4)(rem)?;
-    let mut harp = [0; 7];
+    let mut harp = [None; 7];
     for (i, c) in left.into_iter().enumerate() {
         harp[i] = c;
     }
@@ -72,12 +72,12 @@ fn pitch(s: &str) -> IResult<&str, Name> {
 }
 
 // Accepts a pitch modifier, returns the modifier.
-fn modifier(s: &str) -> IResult<&str, Modifier> {
+fn modifier(s: &str) -> IResult<&str, Accidental> {
     let (rem, c) = one_of("fb♭n♮s#♯")(s)?;
     let modif = match c {
-        'f' | 'b' | '♭' => Modifier::Flat,
-        'n' | '♮' => Modifier::Natural,
-        's' | '#' | '♯' => Modifier::Sharp,
+        'f' | 'b' | '♭' => Accidental::Flat,
+        'n' | '♮' => Accidental::Natural,
+        's' | '#' | '♯' => Accidental::Sharp,
         _ => unreachable!(),
     };
     Ok((rem, modif))
@@ -89,9 +89,15 @@ fn note(s: &str) -> IResult<&str, Note> {
     let (rem, m) = opt(modifier)(rem)?;
     let modifier = match m {
         Some(x) => x,
-        None => Modifier::Natural,
+        None => Accidental::Natural,
     };
-    Ok((rem, Note { name, modifier }))
+    Ok((
+        rem,
+        Note {
+            name,
+            accidental: modifier,
+        },
+    ))
 }
 
 // Accepts any number of notes, delimited by any amount of space,

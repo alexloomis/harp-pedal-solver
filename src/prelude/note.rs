@@ -26,53 +26,53 @@ impl fmt::Display for Name {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum Modifier {
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub enum Accidental {
     Flat,
     Sharp,
     Natural,
 }
 
-impl fmt::Display for Modifier {
+impl fmt::Display for Accidental {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Modifier::Flat => write!(f, "♭"),
-            Modifier::Natural => write!(f, "♮"),
-            Modifier::Sharp => write!(f, "♯"),
+            Accidental::Flat => write!(f, "♭"),
+            Accidental::Natural => write!(f, "♮"),
+            Accidental::Sharp => write!(f, "♯"),
         }
     }
 }
 
-pub fn pedal_symbol(modifier: Modifier) -> char {
+pub fn pedal_symbol(modifier: Accidental) -> char {
     match modifier {
-        Modifier::Flat => '^',
-        Modifier::Natural => '-',
-        Modifier::Sharp => 'v',
+        Accidental::Flat => '^',
+        Accidental::Natural => '-',
+        Accidental::Sharp => 'v',
     }
 }
 
-pub fn pedal_symbol_opt(modifier: Option<Modifier>) -> char {
+pub fn pedal_symbol_opt(modifier: Option<Accidental>) -> char {
     match modifier {
         Some(x) => pedal_symbol(x),
         None => '~',
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, Hash, PartialEq)]
 pub struct Note {
     pub name: Name,
-    pub modifier: Modifier,
+    pub accidental: Accidental,
 }
 
 impl fmt::Debug for Note {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", self.name, self.modifier)
+        write!(f, "{}{}", self.name, self.accidental)
     }
 }
 
 impl fmt::Display for Note {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", self.name, self.modifier)
+        write!(f, "{}{}", self.name, self.accidental)
     }
 }
 
@@ -92,10 +92,23 @@ pub fn read_note(string: &str) -> Note {
         Some(x) => panic!("Invalid note name {x}"),
     };
     let modifier = match chars.next() {
-        Some('b' | 'f' | '♭') => Modifier::Flat,
-        Some('n' | '♮') | None => Modifier::Natural,
-        Some('s' | '#' | '♯') => Modifier::Sharp,
+        Some('b' | 'f' | '♭') => Accidental::Flat,
+        Some('n' | '♮') | None => Accidental::Natural,
+        Some('s' | '#' | '♯') => Accidental::Sharp,
         Some(x) => panic!("Invalid modifier {x}"),
     };
-    Note { name, modifier }
+    Note {
+        name,
+        accidental: modifier,
+    }
+}
+
+impl Note {
+    pub fn is_left(&self) -> bool {
+        (self.name == Name::D) | (self.name == Name::C) | (self.name == Name::B)
+    }
+
+    pub fn is_right(&self) -> bool {
+        !self.is_left()
+    }
 }

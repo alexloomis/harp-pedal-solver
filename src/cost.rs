@@ -1,22 +1,24 @@
+use crate::astar::AstarState;
 use crate::cli::CLI;
 use crate::prelude::*;
-use crate::shift::num_shifts;
 
-// TODO: instead of penalizing simultinaity,
-// penalize total displacement required to resolve simultinaity
-pub fn enharmonic_cost(start: Harp, finish: Harp) -> usize {
+pub fn astar_cost(state: AstarState, target: AstarState) -> usize {
+    let mut out = astar_heuristic(state, target.pedals);
+    out += pedal_cost(state.last_left, target.last_left);
+    out += pedal_cost(state.last_right, target.last_right);
+    out
+}
+
+pub fn astar_heuristic(state: AstarState, end: Harp) -> usize {
+    let start = state.pedals;
     let mut out = 0;
-    let l_count = num_changes(start, finish, 0..=2);
-    let r_count = num_changes(start, finish, 3..=6);
+    let l_count = num_changes(start, end, 0..=2);
+    let r_count = num_changes(start, end, 3..=6);
     out += CLI.pedal_cost * (l_count + r_count);
-    if l_count > 1 {
-        out += CLI.double_change_cost * (l_count - 1);
-    }
-    if r_count > 1 {
-        out += CLI.double_change_cost * (r_count - 1);
-    }
-    out += CLI.double_string_cost * num_same(finish);
-    out += CLI.cross_string_cost * num_crossed(finish);
+    if l_count > 1 {};
+    if r_count > 1 {};
+    out += CLI.double_string_cost * num_same(end);
+    out += CLI.cross_string_cost * num_crossed(end);
     out
 }
 
@@ -25,37 +27,18 @@ fn pedal_diff(old: Note, new: Note) -> usize {
     f(old).saturating_sub(f(new)) + f(new).saturating_sub(f(old))
 }
 
-pub fn pedal_cost(new: &[Option<Note>]) -> usize {
-    let mut cost = 0;
-    let mut change_cost: usize = 0;
-    // Doesn't matter what, since change cost starts at zero.
-    let mut last_note = Note {
-        name: Name::C,
-        modifier: Modifier::Flat,
-    };
-    for change in new {
-        match change {
-            Some(note) => {
-                cost += change_cost
-                    * pedal_diff(last_note, *note)
-                    * CLI.pedal_diatance_cost;
-                change_cost = CLI.quick_change_cost;
-                last_note = *note;
-            }
-            None => {
-                change_cost =
-                    change_cost.saturating_sub(CLI.quick_change_decay);
+pub fn pedal_cost(
+    old: Option<(Note, usize)>,
+    new: Option<(Note, usize)>,
+) -> usize {
+    let mut out = 0;
+    // cost is decayed quick_change_cost
+    if let Some((old_note, cost)) = old {
+        if let Some((new_note, _)) = new {
+            if old_note != new_note {
+                out += cost * (1 + pedal_diff(old_note, new_note));
             }
         }
     }
-    cost
-}
-
-pub fn pedal_cost_both(pedals: &Pedals) -> usize {
-    let (left, right) = unzip_pedals(pedals);
-    pedal_cost(&left) + pedal_cost(&right)
-}
-
-pub fn shift_cost(old: &[Vec<Note>]) -> usize {
-    num_shifts(old).saturating_mul(CLI.early_cost)
+    out
 }
