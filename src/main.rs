@@ -69,7 +69,7 @@ fn main() {
         goal: end.unwrap_or([None; 7]),
     };
 
-    let mut candidates = find_candidates(&music_input);
+    let candidates = find_candidates(&music_input);
     // candidates.sort_by(|x, y| x.cost.cmp(&y.cost));
 
     if !candidates.is_empty() {

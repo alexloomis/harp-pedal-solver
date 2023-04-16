@@ -2,25 +2,52 @@ use crate::cli::CLI;
 use crate::cost::{astar_cost, astar_heuristic};
 use crate::prelude::*;
 use itertools::Itertools;
+use log::trace;
 use pathfinding::directed::astar::{astar_bag, AstarSolution};
 use std::iter;
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub struct Change {
+    pub note: Note,
+    pub cost: usize,
+    pub early: bool,
+}
+
+impl Change {
+    pub fn new(note: Option<Note>, early: bool) -> Option<Change> {
+        note.map(|note| Change {
+            note,
+            cost: CLI.quick_change_cost,
+            early,
+        })
+    }
+
+    pub fn advance_cost(&mut self) {
+        self.cost = self.cost.saturating_sub(CLI.quick_change_decay);
+    }
+
+    pub fn not_early(&mut self) {
+        self.early = false;
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct AstarState {
     pub pedals: Harp,
-    // (last note, cost to change from here)
-    pub last_left: Option<(Note, usize)>,
-    pub last_right: Option<(Note, usize)>,
+    // (last note, cost to change from here, is early)
+    pub last_left: Option<Change>,
+    pub last_right: Option<Change>,
     pub beat: usize,
 }
 
-fn advance_memory(m: Option<(Note, usize)>) -> Option<(Note, usize)> {
-    if let Some((note, cost)) = m {
-        let new_cost = cost.saturating_sub(CLI.quick_change_decay);
-        if new_cost == 0 {
+fn advance_memory(m: Option<Change>) -> Option<Change> {
+    if let Some(mut change) = m {
+        change.advance_cost();
+        if change.cost == 0 {
             None
         } else {
-            Some((note, new_cost))
+            change.not_early();
+            Some(change)
         }
     } else {
         None
@@ -37,21 +64,21 @@ impl AstarState {
         }
     }
 
-    pub fn advance(&mut self, left: Option<Note>, right: Option<Note>) {
+    pub fn advance(&mut self, left: Option<Change>, right: Option<Change>) {
         self.beat += 1;
         match left {
-            Some(note) => {
-                set_pedal(&mut self.pedals, note);
-                self.last_left = Some((note, CLI.quick_change_cost));
+            Some(change) => {
+                set_pedal(&mut self.pedals, change.note);
+                self.last_left = Some(change);
             }
             None => {
                 self.last_left = advance_memory(self.last_left);
             }
         }
         match right {
-            Some(note) => {
-                set_pedal(&mut self.pedals, note);
-                self.last_right = Some((note, CLI.quick_change_cost));
+            Some(change) => {
+                set_pedal(&mut self.pedals, change.note);
+                self.last_right = Some(change);
             }
             None => {
                 self.last_right = advance_memory(self.last_right);
@@ -68,6 +95,7 @@ fn left_targets(state: AstarState, target: Harp) -> Vec<Option<Note>> {
         // Can change a single pedal, if undetermined
         [] => {
             let mut new_lefts = vec![];
+            new_lefts.push(None);
             for (j, n) in target[0..=2].iter().enumerate() {
                 if n.is_none() {
                     for new in [Some(Flat), Some(Natural), Some(Sharp)] {
@@ -77,7 +105,6 @@ fn left_targets(state: AstarState, target: Harp) -> Vec<Option<Note>> {
                     }
                 }
             }
-            new_lefts.push(None);
             new_lefts
         }
         // Must change the given pedal
@@ -96,16 +123,16 @@ fn right_targets(state: AstarState, target: Harp) -> Vec<Option<Note>> {
         // Can change a single pedal, if undetermined
         [] => {
             let mut new_rights = vec![];
+            new_rights.push(None);
             for (j, n) in target[3..=6].iter().enumerate() {
                 if n.is_none() {
                     for new in [Some(Flat), Some(Natural), Some(Sharp)] {
                         if state.pedals[j] != new {
-                            new_rights.push(idx_to_note(j, new));
+                            new_rights.push(idx_to_note(j + 3, new));
                         }
                     }
                 }
             }
-            new_rights.push(None);
             new_rights
         }
         // Must change the given pedal
@@ -119,13 +146,29 @@ fn right_targets(state: AstarState, target: Harp) -> Vec<Option<Note>> {
 }
 
 fn get_targets(state: AstarState, target: Harp) -> Vec<AstarState> {
+    trace!("From state\n{:?}\nwith target\n{:?}", state, target);
     let mut out: Vec<AstarState> = vec![];
     let l_changes = left_targets(state, target);
+    trace!("Possible left changes:\n{l_changes:?}");
+    let left_is_early = l_changes.len() > 1;
     let r_changes = right_targets(state, target);
+    trace!("Possible right changes:\n{r_changes:?}");
+    let right_is_early = r_changes.len() > 1;
     for (left, right) in l_changes.into_iter().cartesian_product(r_changes) {
         let mut new_state = state;
-        new_state.advance(left, right);
+        trace!("From state\n{new_state:?}");
+        trace!("With left change {left:?}");
+        trace!("With right change {right:?}");
+        new_state.advance(
+            Change::new(left, left_is_early),
+            Change::new(right, right_is_early),
+        );
+        trace!("To state\n{new_state:?}");
         out.push(new_state);
+    }
+    trace!("Found the following possibilities");
+    for o in &out[..] {
+        trace!("{o:?}");
     }
     out
 }
@@ -208,6 +251,12 @@ pub fn find_solutions(
     mid: &[Vec<Harp>],
     end: Harp,
 ) -> Vec<Vec<AstarState>> {
+    for (i, m) in mid.iter().enumerate() {
+        trace!("Options for beat {}", i + 1);
+        for h in m {
+            trace!("{}", pedal_diagram(*h));
+        }
+    }
     let mut best_score = usize::MAX;
     let mut best_choice = vec![];
     for s in possible_starts(start) {

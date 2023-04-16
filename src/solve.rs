@@ -19,7 +19,8 @@ pub fn get_spellings(input: &MusicInput) -> Vec<Vec<Harp>> {
         .collect_vec()
 }
 
-// result is one longer than spelling
+// result is one longer than spelling, since it includes
+// changes left over to get to target state.
 pub fn get_pedal_changes(input: &CandidateBuilder) -> Vec<Vec<Note>> {
     let mut with_diagram =
         Vec::with_capacity(input.spelling.as_ref().unwrap().len() + 2);
