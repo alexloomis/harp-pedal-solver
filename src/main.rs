@@ -107,6 +107,7 @@ fn main() {
             &log_level.to_string(),
             "-o",
             &output.to_string_lossy(),
+            // "-E", // EPS, crops output
             "-",
         ])
         .stdin(Stdio::piped())

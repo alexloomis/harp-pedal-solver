@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 // move to prelude
 use crate::parse::Measure;
 use crate::prelude::*;
@@ -93,7 +95,20 @@ pub fn make_ly_file_(
 ) -> String {
     let (lefts, rights) = unzip_pedals(changes);
     let mut lines: Vec<String> =
-        vec!["\\version \"2.22.0\"".to_string(), "".to_string()];
+        vec!["\\version \"2.22.0\"",
+        "",
+        "\\header {",
+        "    tagline = ##f",
+        "}",
+        "", 
+        "\\layout {",
+        "    \\context {",
+        "        \\Dynamics",
+        "        \\override TextScript.font-shape = #'upright",
+        "        \\override VerticalAxisGroup.nonstaff-nonstaff-spacing = #'((minimum-distance . 2.5))",
+        "    }",
+        "}",
+        "",].iter().map(|s| s.to_string()).collect_vec();
     lines.push(make_ly_treble(treble, start, end));
     lines.push("".to_string());
     lines.push(make_ly_pedals_r(rights));
@@ -102,8 +117,8 @@ pub fn make_ly_file_(
     lines.push("".to_string());
     lines.push("\\new Staff <<".to_string());
     lines.push("    \\new Voice \\treble".to_string());
-    lines.push("    \\new Voice \\pedalsL".to_string());
-    lines.push("    \\new Voice \\pedalsR".to_string());
+    lines.push("    \\new Dynamics \\pedalsR".to_string());
+    lines.push("    \\new Dynamics \\pedalsL".to_string());
     lines.push(">>".to_string());
     lines.join("\n")
 }

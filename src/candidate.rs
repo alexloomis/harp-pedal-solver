@@ -26,7 +26,7 @@ pub fn find_candidates(input: &MusicInput) -> Vec<Candidate> {
         ));
         candidate.set_spelling(s);
         candidate.set_pedals(get_pedal_changes(&candidate));
-        // candidate.refine_spelling(input);
+        candidate.refine_spelling(input);
         candidates.push(candidate);
     }
 

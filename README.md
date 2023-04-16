@@ -15,4 +15,4 @@ To do:
 - [x] fix early placement bugs
 - [x] fold as much as possible into A\* search, especially early placement
 - [ ] fine-tune costs
-- [ ] prettify pdf output
+- [x] prettify pdf output
