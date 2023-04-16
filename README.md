@@ -11,6 +11,8 @@ To do:
 - [ ] good error handling
 - [x] give correct enharmonic spellings
 - [x] give correct pedial diagrams when initially unspecified
-- [ ] insist on a specific pedal (eg so B and Cb can be used for a bisbig)
-- [ ] fix early placement bugs
-- [ ] fold as much as possible into A\* search, especially early placement
+- [ ] insist on a specific pedal (eg so B and Cb can be used for a *bisbig.*)
+- [x] fix early placement bugs
+- [x] fold as much as possible into A\* search, especially early placement
+- [ ] fine-tune costs
+- [ ] prettify pdf output
