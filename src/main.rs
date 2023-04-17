@@ -32,7 +32,7 @@ fn main() {
         .output
         .clone()
         .unwrap_or_else(|| PathBuf::from("pedals"));
-    let (start, mid, end) = match parse(&input) {
+    let parsed = match parse(&input) {
         Ok(x) => x,
         Err(x) => {
             error!("Error parsing file:\n{x}");
@@ -40,33 +40,24 @@ fn main() {
         }
     };
 
-    debug!(
-        "Starting setting: {}",
-        match start {
-            Some(h) => pedal_diagram(h),
-            None => String::from("none"),
-        }
-    );
-    debug!("Music: {mid:?}");
-    debug!(
-        "Final setting: {}",
-        match end {
-            Some(h) => pedal_diagram(h),
-            None => String::from("none"),
-        }
-    );
+    debug!("Starting setting: {}",
+           pedal_diagram(parsed.start.unwrap_or([None; 7])));
+    debug!("Music: {:?}", parsed.this_any);
+    debug!("Final setting: {}",
+           pedal_diagram(parsed.end.unwrap_or([None; 7])));
 
-    let measure_lengths = mid.iter().map(|v| v.len());
+    let mut measures = Vec::with_capacity(parsed.this_any.len());
+    let measure_lengths = parsed.this_any.clone()
+        .into_iter().map(|v| v.len());
 
     let music_input = MusicInput {
-        diagram: start.unwrap_or([None; 7]),
-        music: mid
-            .clone()
+        diagram: parsed.start.unwrap_or([None; 7]),
+        music: parsed
+            .this_any
             .into_iter()
             .flatten()
-            .map(|v| v.into_iter().map(note_to_pc).collect_vec())
             .collect_vec(),
-        goal: end.unwrap_or([None; 7]),
+        goal: parsed.end.unwrap_or([None; 7]),
     };
 
     let candidates = find_candidates(&music_input);
@@ -81,7 +72,6 @@ fn main() {
 
     let decision = &candidates[0];
     let spell = &decision.spelling;
-    let mut measures = Vec::with_capacity(measure_lengths.len());
     let mut j = 0;
     for n in measure_lengths {
         let mut measure = Vec::with_capacity(n);

@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use crate::util::unravel_paths;
+use itertools::Itertools;
 use trees::{Forest, Tree};
 
 // What pedals can be used to play a note,
@@ -69,7 +70,7 @@ fn assignment_builder(notes: &[PitchClass], used: &[Name]) -> Forest<Note> {
 // Build a tree of all possible assignments of notes,
 // All terminal nodes represent a complete assignment.
 // Returns empty Forest if there are no possibilities.
-pub fn assign(notes: &[PitchClass]) -> Vec<Harp> {
+pub fn assign(preset: &[Note], notes: &[PitchClass]) -> Vec<Harp> {
     let mut sanitized = Vec::new();
     // 1, 6, 11 can only be accessed by one pedal
     for x in [1, 6, 11, 0, 2, 3, 4, 5, 7, 8, 9, 10] {
@@ -77,13 +78,12 @@ pub fn assign(notes: &[PitchClass]) -> Vec<Harp> {
             sanitized.push(x);
         }
     }
-    unravel_paths(assignment_builder(&sanitized, &[]))
-        .iter()
-        .map(|v| notes_to_harp(v))
-        .collect()
-}
-
-// Does assign return a set of options?
-pub fn can_assign(notes: &[PitchClass]) -> bool {
-    notes.is_empty() || !assign(notes).is_empty()
+    unravel_paths(assignment_builder(
+        &sanitized,
+        &preset.iter().map(|n| n.name).collect_vec(),
+    ))
+    .iter()
+    .map(|v| notes_to_harp(v))
+    .map(|h| update_harp(h, notes_to_harp(preset)))
+    .collect_vec()
 }

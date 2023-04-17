@@ -11,7 +11,7 @@ pub fn get_spellings(input: &MusicInput) -> Vec<Vec<Harp>> {
     let mid = input
         .music
         .iter()
-        .map(|p| assign(p))
+        .map(|(preset, other)| assign(preset, other))
         .collect::<Vec<Vec<Harp>>>();
     find_solutions(start, &mid, end)
         .into_iter()

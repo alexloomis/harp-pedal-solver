@@ -33,7 +33,8 @@ pub fn unzip_pedals(pedals: &Pedals) -> (Pedals, Pedals) {
 
 pub struct MusicInput {
     pub diagram: Harp,
-    pub music: Vec<Vec<PitchClass>>,
+    // presets, other pitches
+    pub music: Vec<(Vec<Note>, Vec<PitchClass>)>,
     pub goal: Harp,
 }
 
@@ -85,7 +86,9 @@ impl CandidateBuilder {
                 // For each pitch
                 for (j, d) in s[i].iter_mut().enumerate() {
                     if let Some(note) = idx_to_note(j, *d) {
-                        if !m.contains(&note_to_pc(note)) {
+                        if !m.0.contains(&note)
+                            && !m.1.contains(&note_to_pc(note))
+                        {
                             *d = None;
                         }
                     }

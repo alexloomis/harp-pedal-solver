@@ -1,15 +1,30 @@
+use crate::parse::NoteRequest::*;
 use crate::prelude::*;
 use itertools::Itertools;
 use nom::{
+    branch::alt,
     character::complete::{
         char, line_ending, multispace0, one_of, space0, space1,
     },
-    combinator::{all_consuming, opt},
+    combinator::{all_consuming, map, opt, value},
     error::ParseError,
     multi::{count, many1, separated_list1},
-    sequence::delimited,
+    sequence::{delimited, preceded},
     Finish, IResult,
 };
+
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub enum NoteRequest {
+    This(Note),
+    Any(Note),
+    Rest,
+}
+
+pub struct Parsed {
+    pub start: Option<Harp>,
+    pub this_any: Vec<Vec<(Vec<Note>, Vec<PitchClass>)>>,
+    pub end: Option<Harp>,
+}
 
 // Allow but don't require space before and after, excludes newlines.
 fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(
@@ -55,6 +70,11 @@ fn diagram(s: &str) -> IResult<&str, Harp> {
     Ok((rem, harp))
 }
 
+// Accepts a pedal setting, returns the appropriate u8 representing it.
+fn rest(s: &str) -> IResult<&str, NoteRequest> {
+    value(Rest, one_of("rR"))(s)
+}
+
 // Accepts a pitch name, returns the name.
 fn pitch(s: &str) -> IResult<&str, Name> {
     let (rem, c) = one_of("abcdefgABCDEFG")(s)?;
@@ -75,9 +95,9 @@ fn pitch(s: &str) -> IResult<&str, Name> {
 fn modifier(s: &str) -> IResult<&str, Accidental> {
     let (rem, c) = one_of("fb♭n♮s#♯")(s)?;
     let modif = match c {
-        'f' | 'b' | '♭' => Accidental::Flat,
-        'n' | '♮' => Accidental::Natural,
-        's' | '#' | '♯' => Accidental::Sharp,
+        'f' | 'b' | '♭' => Flat,
+        'n' | '♮' => Natural,
+        's' | '#' | '♯' => Sharp,
         _ => unreachable!(),
     };
     Ok((rem, modif))
@@ -89,7 +109,7 @@ fn note(s: &str) -> IResult<&str, Note> {
     let (rem, m) = opt(modifier)(rem)?;
     let modifier = match m {
         Some(x) => x,
-        None => Accidental::Natural,
+        None => Natural,
     };
     Ok((
         rem,
@@ -100,14 +120,25 @@ fn note(s: &str) -> IResult<&str, Note> {
     ))
 }
 
-// Accepts any number of notes, delimited by any amount of space,
-// all on the same line.
-// "b#\tc  d \t" -> (" \t", [B#, C, D])
-fn beat(s: &str) -> IResult<&str, Vec<Note>> {
-    separated_list1(many1(space1), note)(s)
+fn any_note(s: &str) -> IResult<&str, NoteRequest> {
+    map(note, Any)(s)
 }
 
-pub type Measure = Vec<Vec<Note>>;
+fn this_note(s: &str) -> IResult<&str, NoteRequest> {
+    map(preceded(char('*'), note), This)(s)
+}
+
+fn note_request(s: &str) -> IResult<&str, NoteRequest> {
+    alt((rest, this_note, any_note))(s)
+}
+
+// Accepts any number of note requests, delimited by any amount of space,
+// all on the same line. "b#\tc  d \t" -> (" \t", [B#, C, D])
+fn beat(s: &str) -> IResult<&str, Vec<NoteRequest>> {
+    separated_list1(many1(space1), note_request)(s)
+}
+
+pub type Measure = Vec<Vec<NoteRequest>>;
 
 // Accepts beats sepparated by at least a new line,
 // possibly with extra whitespace.
@@ -138,6 +169,7 @@ fn strip_comments(s: &str) -> String {
 }
 
 #[allow(clippy::type_complexity)]
+// Parse an already processed file.
 fn parse_clean_file(
     s: &str,
 ) -> IResult<&str, (Option<Harp>, Vec<Measure>, Option<Harp>)> {
@@ -148,7 +180,7 @@ fn parse_clean_file(
 }
 
 #[allow(clippy::type_complexity)]
-pub fn parse(
+fn pre_parse(
     s: &str,
 ) -> Result<(Option<Harp>, Vec<Measure>, Option<Harp>), String> {
     let t = strip_comments(s);
@@ -156,5 +188,39 @@ pub fn parse(
     match r {
         Ok((_, y)) => Ok(y),
         Err(x) => Err(x.to_string()),
+    }
+}
+
+// List of rest, this, and any, to list of (this, any)
+fn split_requests(requests: Vec<Measure>)
+    -> Vec<Vec<(Vec<Note>, Vec<PitchClass>)>> {
+        let mut out = Vec::with_capacity(requests.len());
+        for measure in requests {
+            let mut measure_contents = Vec::with_capacity(measure.len());
+            for beat in measure {
+                let mut this = Vec::with_capacity(beat.len());
+                let mut any = Vec::with_capacity(beat.len());
+                for req in beat {
+                    match req {
+                        This(n) => this.push(n),
+                        Any(n) => any.push(note_to_pc(n)),
+                        Rest => (),
+                    }
+                }
+                measure_contents.push((this, any));
+            }
+            out.push(measure_contents);
+        }
+        out
+    }
+
+pub fn parse(s: &str) -> Result<Parsed, String> {
+    match pre_parse(s) {
+        Ok((start, mid, end)) => Ok(Parsed {
+            start,
+            this_any: split_requests(mid),
+            end,
+        }),
+        Err(x) => Err(x),
     }
 }

@@ -1,7 +1,5 @@
 use itertools::Itertools;
 
-// move to prelude
-use crate::parse::Measure;
 use crate::prelude::*;
 
 fn pedal_markup(diagram: Harp) -> String {
@@ -12,7 +10,7 @@ fn pedal_markup(diagram: Harp) -> String {
     out
 }
 
-fn add_measure(contents: &mut Vec<String>, measure: Measure) {
+fn add_measure(contents: &mut Vec<String>, measure: Vec<Vec<Note>>) {
     let mut new_line = String::from("");
     for beat in measure {
         let len = beat.len();
@@ -43,7 +41,11 @@ fn add_measure(contents: &mut Vec<String>, measure: Measure) {
     contents.push(new_line)
 }
 
-fn make_ly_treble(treble: Vec<Measure>, start: Harp, end: Harp) -> String {
+fn make_ly_treble(
+    treble: Vec<Vec<Vec<Note>>>,
+    start: Harp,
+    end: Harp,
+) -> String {
     let mut lines: Vec<String> = vec![
         "treble = \\fixed c' {".to_string(),
         "    \\clef \"treble\" \\key c \\major".to_string(),
@@ -88,7 +90,7 @@ fn make_ly_pedals_r(changes: Vec<Vec<Note>>) -> String {
 }
 
 pub fn make_ly_file_(
-    treble: Vec<Measure>,
+    treble: Vec<Vec<Vec<Note>>>,
     start: Harp,
     end: Harp,
     changes: &Pedals,
