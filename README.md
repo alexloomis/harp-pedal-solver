@@ -5,14 +5,15 @@ To do:
 - [ ] accept docx files
 - [ ] gui input
 - [x] pdf output
-- [ ] allow rests
+- [x] allow rests
 - [ ] allow pedal diagrams mid-music?
 - [ ] allow multiple sections per file?
 - [ ] good error handling
 - [x] give correct enharmonic spellings
 - [x] give correct pedial diagrams when initially unspecified
-- [ ] insist on a specific pedal (eg so B and Cb can be used for a *bisbig.*)
+- [x] insist on a specific pedal (eg so B and Cb can be used for a *bisbig.*)
 - [x] fix early placement bugs
 - [x] fold as much as possible into A\* search, especially early placement
 - [ ] fine-tune costs
 - [x] prettify pdf output
+- [ ] early placement cost scales with how early it is

@@ -78,6 +78,9 @@ pub fn assign(preset: &[Note], notes: &[PitchClass]) -> Vec<Harp> {
             sanitized.push(x);
         }
     }
+    if notes.is_empty() {
+        vec![update_harp([None; 7], notes_to_harp(preset))]
+    } else {
     unravel_paths(assignment_builder(
         &sanitized,
         &preset.iter().map(|n| n.name).collect_vec(),
@@ -86,4 +89,5 @@ pub fn assign(preset: &[Note], notes: &[PitchClass]) -> Vec<Harp> {
     .map(|v| notes_to_harp(v))
     .map(|h| update_harp(h, notes_to_harp(preset)))
     .collect_vec()
+    }
 }
