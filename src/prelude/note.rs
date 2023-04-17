@@ -1,3 +1,4 @@
+use crate::prelude::*;
 use enum_iterator::Sequence;
 use std::fmt;
 
@@ -36,18 +37,18 @@ pub enum Accidental {
 impl fmt::Display for Accidental {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Accidental::Flat => write!(f, "♭"),
-            Accidental::Natural => write!(f, "♮"),
-            Accidental::Sharp => write!(f, "♯"),
+            Flat => write!(f, "♭"),
+            Natural => write!(f, "♮"),
+            Sharp => write!(f, "♯"),
         }
     }
 }
 
 pub fn pedal_symbol(modifier: Accidental) -> char {
     match modifier {
-        Accidental::Flat => '^',
-        Accidental::Natural => '-',
-        Accidental::Sharp => 'v',
+        Flat => '^',
+        Natural => '-',
+        Sharp => 'v',
     }
 }
 
@@ -92,9 +93,9 @@ pub fn read_note(string: &str) -> Note {
         Some(x) => panic!("Invalid note name {x}"),
     };
     let modifier = match chars.next() {
-        Some('b' | 'f' | '♭') => Accidental::Flat,
-        Some('n' | '♮') | None => Accidental::Natural,
-        Some('s' | '#' | '♯') => Accidental::Sharp,
+        Some('b' | 'f' | '♭') => Flat,
+        Some('n' | '♮') | None => Natural,
+        Some('s' | '#' | '♯') => Sharp,
         Some(x) => panic!("Invalid modifier {x}"),
     };
     Note {
