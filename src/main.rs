@@ -10,25 +10,25 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 // use std::time::Instant;
 
-use harp_pedal_solver::cli::CLI;
+use harp_pedal_solver::cli::CONST;
 use harp_pedal_solver::output::make_ly_file_;
 use harp_pedal_solver::parse::*;
 use harp_pedal_solver::prelude::*;
 
 // Currently silently sets impossible measure to ~~~|~~~~
 fn main() {
-    let input = fs::read_to_string(&CLI.file).expect("Unable to read file");
-    let _show = match CLI.show {
+    let input = fs::read_to_string(&CONST.file).expect("Unable to read file");
+    let _show = match CONST.show {
         0 => usize::MAX,
         x => x,
     };
-    let log_level = CLI.verbose.log_level_filter();
+    let log_level = CONST.verbose.log_level_filter();
     SimpleLogger::new()
         .with_level(log_level)
         .without_timestamps()
         .init()
         .unwrap();
-    let output = CLI
+    let output = CONST
         .output
         .clone()
         .unwrap_or_else(|| PathBuf::from("pedals"));

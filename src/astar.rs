@@ -1,52 +1,42 @@
-use crate::cli::CLI;
+use crate::cli::CONST;
 use crate::cost::{astar_cost, astar_heuristic};
 use crate::prelude::*;
 use itertools::Itertools;
-use log::trace;
 use pathfinding::directed::astar::{astar_bag, AstarSolution};
 use std::iter;
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Change {
     pub note: Note,
-    pub cost: usize,
-    pub early: bool,
+    pub time: usize,
 }
 
 impl Change {
-    pub fn new(note: Option<Note>, early: bool) -> Option<Change> {
-        note.map(|note| Change {
-            note,
-            cost: CLI.quick_change_cost,
-            early,
-        })
+    pub fn new(note: Note) -> Change {
+        Change { note, time: 0 }
     }
 
-    pub fn advance_cost(&mut self) {
-        self.cost = self.cost.saturating_sub(CLI.quick_change_decay);
-    }
-
-    pub fn not_early(&mut self) {
-        self.early = false;
+    pub fn advance(&mut self) {
+        self.time += 1
     }
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct AstarState {
+    pub beat: usize,
     pub pedals: Harp,
-    // (last note, cost to change from here, is early)
+    // (last note, how long ago it was)
     pub last_left: Option<Change>,
     pub last_right: Option<Change>,
-    pub beat: usize,
+    pub early: [bool; 7],
 }
 
 fn advance_memory(m: Option<Change>) -> Option<Change> {
     if let Some(mut change) = m {
-        change.advance_cost();
-        if change.cost == 0 {
+        if change.time >= CONST.forget_after {
             None
         } else {
-            change.not_early();
+            change.advance();
             Some(change)
         }
     } else {
@@ -57,33 +47,53 @@ fn advance_memory(m: Option<Change>) -> Option<Change> {
 impl AstarState {
     pub fn new(pedals: Harp) -> AstarState {
         AstarState {
+            beat: 0,
             pedals,
             last_left: None,
             last_right: None,
-            beat: 0,
+            early: [false; 7],
         }
     }
 
-    pub fn advance(&mut self, left: Option<Change>, right: Option<Change>) {
+    pub fn set_early(&mut self, name: Name) {
+        self.early[name_to_usize(name)] = true;
+    }
+
+    // Unset notes that are no longer early
+    pub fn unset_early(&mut self, target: Harp) {
+        for (i, b) in self.early.iter_mut().enumerate() {
+            *b = *b && target[i].is_none();
+        }
+    }
+
+    pub fn advance(
+        &mut self,
+        left: Option<Note>,
+        right: Option<Note>,
+        target: Harp,
+    ) {
         self.beat += 1;
         match left {
-            Some(change) => {
-                set_pedal(&mut self.pedals, change.note);
-                self.last_left = Some(change);
+            Some(note) => {
+                set_pedal(&mut self.pedals, note);
+                self.last_left = Some(Change::new(note));
+                self.set_early(note.name);
             }
             None => {
                 self.last_left = advance_memory(self.last_left);
             }
         }
         match right {
-            Some(change) => {
-                set_pedal(&mut self.pedals, change.note);
-                self.last_right = Some(change);
+            Some(note) => {
+                set_pedal(&mut self.pedals, note);
+                self.last_right = Some(Change::new(note));
+                self.set_early(note.name);
             }
             None => {
                 self.last_right = advance_memory(self.last_right);
             }
         }
+        self.unset_early(target);
     }
 }
 
@@ -145,30 +155,16 @@ fn right_targets(state: AstarState, target: Harp) -> Vec<Option<Note>> {
     }
 }
 
+// let left_is_early = l_changes.len() > 1;
+// let right_is_early = r_changes.len() > 1;
 fn get_targets(state: AstarState, target: Harp) -> Vec<AstarState> {
-    trace!("From state\n{:?}\nwith target\n{:?}", state, target);
     let mut out: Vec<AstarState> = vec![];
     let l_changes = left_targets(state, target);
-    trace!("Possible left changes:\n{l_changes:?}");
-    let left_is_early = l_changes.len() > 1;
     let r_changes = right_targets(state, target);
-    trace!("Possible right changes:\n{r_changes:?}");
-    let right_is_early = r_changes.len() > 1;
     for (left, right) in l_changes.into_iter().cartesian_product(r_changes) {
         let mut new_state = state;
-        trace!("From state\n{new_state:?}");
-        trace!("With left change {left:?}");
-        trace!("With right change {right:?}");
-        new_state.advance(
-            Change::new(left, left_is_early),
-            Change::new(right, right_is_early),
-        );
-        trace!("To state\n{new_state:?}");
+        new_state.advance(left, right, target);
         out.push(new_state);
-    }
-    trace!("Found the following possibilities");
-    for o in &out[..] {
-        trace!("{o:?}");
     }
     out
 }
@@ -251,12 +247,6 @@ pub fn find_solutions(
     mid: &[Vec<Harp>],
     end: Harp,
 ) -> Vec<Vec<AstarState>> {
-    for (i, m) in mid.iter().enumerate() {
-        trace!("Options for beat {}", i + 1);
-        for h in m {
-            trace!("{}", pedal_diagram(*h));
-        }
-    }
     let mut best_score = usize::MAX;
     let mut best_choice = vec![];
     for s in possible_starts(start) {
@@ -264,8 +254,8 @@ pub fn find_solutions(
             if score < best_score {
                 best_score = score;
                 best_choice = astar.into_iter().collect_vec();
-            } else if score == best_score {
-                best_choice.append(&mut astar.into_iter().collect_vec());
+                // } else if score == best_score {
+                //     best_choice.append(&mut astar.into_iter().collect_vec());
             }
         }
     }

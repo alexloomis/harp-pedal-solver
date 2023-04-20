@@ -1,4 +1,4 @@
-use log::{info, trace};
+use log::info;
 
 use crate::{
     prelude::*,
@@ -11,7 +11,6 @@ pub fn find_candidates(input: &MusicInput) -> Vec<Candidate> {
     let mut candidates: Vec<CandidateBuilder> =
         Vec::with_capacity(spellings.len());
     for s in spellings {
-        trace!("Working on spelling {s:?}");
         let mut candidate = CandidateBuilder::new();
         candidate.set_diagram(update_harp(
             [Some(Flat); 7],

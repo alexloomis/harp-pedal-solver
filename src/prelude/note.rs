@@ -1,8 +1,7 @@
 use crate::prelude::*;
-use enum_iterator::Sequence;
 use std::fmt;
 
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, Sequence)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Name {
     A,
     B,
