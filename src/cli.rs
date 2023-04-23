@@ -3,7 +3,7 @@ use clap_verbosity_flag::{InfoLevel, Verbosity};
 use lazy_static::lazy_static;
 use std::path::PathBuf;
 
-const SHOW: usize = 3;
+// const SHOW: usize = 3;
 const CROSS_STRING_COST: usize = 1200;
 const DOUBLE_STRING_COST: usize = 100;
 const EARLY_CHANGE_COST: usize = 300;
@@ -20,9 +20,9 @@ pub struct Cli {
     /// Write output to FILE.
     #[arg(short, long, value_name = "FILE")]
     pub output: Option<PathBuf>,
-    /// Limit how many possibilities are shown. To show all, set show = 0.
-    #[arg(long, default_value_t = SHOW, value_name = "INT")]
-    pub show: usize,
+    // /// Limit how many possibilities are shown. To show all, set show = 0.
+    // #[arg(long, default_value_t = SHOW, value_name = "INT")]
+    // pub show: usize,
     #[command(flatten)]
     pub verbose: Verbosity<InfoLevel>,
     /// How much to penalize crossed strings (eg E# and Fb).

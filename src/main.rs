@@ -18,10 +18,10 @@ use harp_pedal_solver::prelude::*;
 // Currently silently sets impossible measure to ~~~|~~~~
 fn main() {
     let input = fs::read_to_string(&CONST.file).expect("Unable to read file");
-    let _show = match CONST.show {
-        0 => usize::MAX,
-        x => x,
-    };
+    // let _show = match CONST.show {
+    //     0 => usize::MAX,
+    //     x => x,
+    // };
     let log_level = CONST.verbose.log_level_filter();
     SimpleLogger::new()
         .with_level(log_level)
@@ -40,23 +40,22 @@ fn main() {
         }
     };
 
-    debug!("Starting setting: {}",
-           pedal_diagram(parsed.start.unwrap_or([None; 7])));
+    debug!(
+        "Starting setting: {}",
+        pedal_diagram(parsed.start.unwrap_or([None; 7]))
+    );
     debug!("Music: {:?}", parsed.this_any);
-    debug!("Final setting: {}",
-           pedal_diagram(parsed.end.unwrap_or([None; 7])));
+    debug!(
+        "Final setting: {}",
+        pedal_diagram(parsed.end.unwrap_or([None; 7]))
+    );
 
     let mut measures = Vec::with_capacity(parsed.this_any.len());
-    let measure_lengths = parsed.this_any.clone()
-        .into_iter().map(|v| v.len());
+    let measure_lengths = parsed.this_any.clone().into_iter().map(|v| v.len());
 
     let music_input = MusicInput {
         diagram: parsed.start.unwrap_or([None; 7]),
-        music: parsed
-            .this_any
-            .into_iter()
-            .flatten()
-            .collect_vec(),
+        music: parsed.this_any.into_iter().flatten().collect_vec(),
         goal: parsed.end.unwrap_or([None; 7]),
     };
 
