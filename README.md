@@ -3,7 +3,7 @@
 To do:
 - [ ] reject impossible music
 - [ ] accept docx files
-- [ ] gui input
+- [~] gui input
 - [x] pdf output
 - [x] allow rests
 - [ ] allow pedal diagrams mid-music?
@@ -16,4 +16,4 @@ To do:
 - [x] fold as much as possible into A\* search, especially early placement
 - [ ] fine-tune costs
 - [x] prettify pdf output
-- [ ] early placement cost scales with how early it is
+- [x] early placement cost scales with how early it is
