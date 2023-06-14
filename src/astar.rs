@@ -246,7 +246,7 @@ pub fn find_solutions(
     start: Harp,
     mid: &[Vec<Harp>],
     end: Harp,
-) -> Vec<Vec<AstarState>> {
+) -> (Vec<Vec<AstarState>>, usize) {
     let mut best_score = usize::MAX;
     let mut best_choice = vec![];
     for s in possible_starts(start) {
@@ -254,6 +254,7 @@ pub fn find_solutions(
             if score < best_score {
                 best_score = score;
                 best_choice = astar.into_iter().collect_vec();
+                // Allow tied options from a diffeent pedal setting
                 // } else if score == best_score {
                 //     best_choice.append(&mut astar.into_iter().collect_vec());
             }
@@ -264,5 +265,5 @@ pub fn find_solutions(
         path.pop();
         out.push(path.into_iter().skip(1).collect_vec());
     }
-    out
+    (out, best_score)
 }

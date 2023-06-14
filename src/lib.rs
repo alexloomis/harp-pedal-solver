@@ -8,7 +8,7 @@ pub mod astar;
 pub mod candidate;
 pub mod cli;
 pub mod cost;
-pub mod output;
+pub mod lilypond;
 pub mod parse;
 pub mod prelude;
 pub mod solve;

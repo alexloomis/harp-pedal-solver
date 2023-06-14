@@ -89,11 +89,21 @@ fn make_ly_pedals_r(changes: Vec<Vec<Note>>) -> String {
     out
 }
 
+fn make_ly_cost(cost: usize) -> String {
+    let cost_out_of_ten = cost as f64 / 175.0;
+    let cost_string = format!("{cost_out_of_ten:.2}");
+    let mut out = "\\markup { \"Estimated difficulty: ".to_string();
+    out.push_str(&cost_string);
+    out.push_str("\" }");
+    out
+}
+
 pub fn make_ly_file_(
     treble: Vec<Vec<Vec<Note>>>,
     start: Harp,
     end: Harp,
     changes: &Pedals,
+    cost: usize,
 ) -> String {
     let (lefts, rights) = unzip_pedals(changes);
     let mut lines: Vec<String> =
@@ -116,6 +126,8 @@ pub fn make_ly_file_(
     lines.push(make_ly_pedals_r(rights));
     lines.push("".to_string());
     lines.push(make_ly_pedals_l(lefts));
+    lines.push("".to_string());
+    lines.push(make_ly_cost(cost));
     lines.push("".to_string());
     lines.push("\\new Staff <<".to_string());
     lines.push("    \\new Voice \\treble".to_string());

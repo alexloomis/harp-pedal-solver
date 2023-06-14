@@ -10,7 +10,7 @@ use std::process::{Command, ExitCode};
 // use std::time::Instant;
 
 use harp_pedal_solver::cli::CONST;
-use harp_pedal_solver::output::make_ly_file_;
+use harp_pedal_solver::lilypond::make_ly_file_;
 use harp_pedal_solver::parse::*;
 use harp_pedal_solver::prelude::*;
 
@@ -85,6 +85,7 @@ fn main() -> ExitCode {
         decision.diagram,
         decision.destination,
         &decision.pedals,
+        decision.cost,
     );
 
     debug!("{ly_file}");

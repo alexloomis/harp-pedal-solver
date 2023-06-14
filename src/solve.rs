@@ -5,7 +5,7 @@ use crate::assign::assign;
 use crate::astar::find_solutions;
 use crate::prelude::*;
 
-pub fn get_spellings(input: &MusicInput) -> Vec<Vec<Harp>> {
+pub fn get_spellings(input: &MusicInput) -> (Vec<Vec<Harp>>, usize) {
     let start = input.diagram;
     let end = input.goal;
     let mid = input
@@ -13,10 +13,14 @@ pub fn get_spellings(input: &MusicInput) -> Vec<Vec<Harp>> {
         .iter()
         .map(|(preset, other)| assign(preset, other))
         .collect::<Vec<Vec<Harp>>>();
-    find_solutions(start, &mid, end)
-        .into_iter()
-        .map(|v| v.into_iter().map(|a| a.pedals).collect_vec())
-        .collect_vec()
+    let (solutions, cost) = find_solutions(start, &mid, end);
+    (
+        solutions
+            .into_iter()
+            .map(|v| v.into_iter().map(|a| a.pedals).collect_vec())
+            .collect_vec(),
+        cost,
+    )
 }
 
 // result is one longer than spelling, since it includes
