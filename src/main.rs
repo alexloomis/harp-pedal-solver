@@ -5,9 +5,8 @@ use itertools::Itertools;
 use log::{debug, error, info, warn};
 use simple_logger::SimpleLogger;
 use std::fs;
-use std::io::Write;
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
+use std::process::{Command, ExitCode};
 // use std::time::Instant;
 
 use harp_pedal_solver::cli::CONST;
@@ -16,7 +15,7 @@ use harp_pedal_solver::parse::*;
 use harp_pedal_solver::prelude::*;
 
 // Currently silently sets impossible measure to ~~~|~~~~
-fn main() {
+fn main() -> ExitCode {
     let input = fs::read_to_string(&CONST.file).expect("Unable to read file");
     // let _show = match CONST.show {
     //     0 => usize::MAX,
@@ -36,7 +35,7 @@ fn main() {
         Ok(x) => x,
         Err(x) => {
             error!("Error parsing file:\n{x}");
-            return;
+            return ExitCode::FAILURE;
         }
     };
 
@@ -66,7 +65,7 @@ fn main() {
         info!("Found {} possibilities...", candidates.len());
     } else {
         error!("Could not find any solutions.");
-        return;
+        return ExitCode::FAILURE;
     }
 
     let decision = &candidates[0];
@@ -90,23 +89,21 @@ fn main() {
 
     debug!("{ly_file}");
 
-    let mut ly_command = Command::new("lilypond")
+    fs::write("temp.ly", ly_file).expect("./ does not exist");
+
+    let ly_command = Command::new("lilypond")
         .args([
             "-l",
             &log_level.to_string(),
             "-o",
             &output.to_string_lossy(),
             // "-E", // EPS, crops output
-            "-",
+            "temp.ly",
         ])
-        .stdin(Stdio::piped())
-        .spawn()
-        .unwrap();
-    ly_command
-        .stdin
-        .as_mut()
-        .unwrap()
-        .write_all(ly_file.as_bytes())
-        .unwrap();
-    ly_command.wait().unwrap();
+        .status();
+
+    match ly_command {
+        Ok(_) => ExitCode::SUCCESS,
+        Err(_) => ExitCode::FAILURE,
+    }
 }
