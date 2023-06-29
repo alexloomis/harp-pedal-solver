@@ -17,3 +17,6 @@ To do:
 - [ ] fine-tune costs
 - [x] prettify pdf output
 - [x] early placement cost scales with how early it is
+- [x] specify output format
+- [ ] change input syntax to use [ ... ] for chords
+- [ ] split Cli into two structs to make help more readable

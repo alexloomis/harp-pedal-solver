@@ -16,10 +16,14 @@ const PEDAL_DISTANCE_COST: usize = 1;
 #[derive(Parser)]
 #[command(author, version, about)]
 pub struct Cli {
+    /// Input file in .hrp format.
     pub file: PathBuf,
     /// Write output to FILE.
     #[arg(short, long, value_name = "FILE")]
     pub output: Option<PathBuf>,
+    /// Output a PDF. Requires lilypond.
+    #[arg(long)]
+    pub pdf: bool,
     // /// Limit how many possibilities are shown. To show all, set show = 0.
     // #[arg(long, default_value_t = SHOW, value_name = "INT")]
     // pub show: usize,

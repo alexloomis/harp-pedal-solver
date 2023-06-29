@@ -69,42 +69,49 @@ fn main() -> ExitCode {
     }
 
     let decision = &candidates[0];
-    let spell = &decision.spelling;
-    let mut j = 0;
-    for n in measure_lengths {
-        let mut measure = Vec::with_capacity(n);
-        for _ in 0..n {
-            measure.push(harp_to_notes(spell[j]));
-            j += 1;
+
+    if CONST.pdf {
+        let spell = &decision.spelling;
+        // Can also be used for pretty output.
+        let mut j = 0;
+        for n in measure_lengths {
+            let mut measure = Vec::with_capacity(n);
+            for _ in 0..n {
+                measure.push(harp_to_notes(spell[j]));
+                j += 1;
+            }
+            measures.push(measure);
         }
-        measures.push(measure);
-    }
 
-    let ly_file = make_ly_file_(
-        measures,
-        decision.diagram,
-        decision.destination,
-        &decision.pedals,
-        decision.cost,
-    );
+        let ly_file = make_ly_file_(
+            measures,
+            decision.diagram,
+            decision.destination,
+            &decision.pedals,
+            decision.cost,
+        );
 
-    debug!("{ly_file}");
+        debug!("{ly_file}");
 
-    fs::write("temp.ly", ly_file).expect("./ does not exist");
+        fs::write("temp.ly", ly_file).expect("./ does not exist");
 
-    let ly_command = Command::new("lilypond")
-        .args([
-            "-l",
-            &log_level.to_string(),
-            "-o",
-            &output.to_string_lossy(),
-            // "-E", // EPS, crops output
-            "temp.ly",
-        ])
-        .status();
+        let ly_command = Command::new("lilypond")
+            .args([
+                "-l",
+                &log_level.to_string(),
+                "-o",
+                &output.to_string_lossy(),
+                // "-E", // EPS, crops output
+                "temp.ly",
+            ])
+            .status();
 
-    match ly_command {
-        Ok(_) => ExitCode::SUCCESS,
-        Err(_) => ExitCode::FAILURE,
+        match ly_command {
+            Ok(_) => ExitCode::SUCCESS,
+            Err(_) => ExitCode::FAILURE,
+        }
+    } else {
+        println!("{:?}", decision.pedals);
+        ExitCode::SUCCESS
     }
 }
