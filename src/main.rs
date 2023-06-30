@@ -58,8 +58,13 @@ fn main() -> ExitCode {
         goal: parsed.end.unwrap_or([None; 7]),
     };
 
-    let candidates = find_candidates(&music_input);
-    // candidates.sort_by(|x, y| x.cost.cmp(&y.cost));
+    let candidates = match find_candidates(&music_input) {
+        Ok(x) => x,
+        Err(x) => {
+            error!("Impossible chord at beats {:?}", x);
+            return ExitCode::FAILURE;
+        }
+    };
 
     if !candidates.is_empty() {
         info!("Found {} possibilities...", candidates.len());

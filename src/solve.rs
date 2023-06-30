@@ -4,23 +4,27 @@ use itertools::Itertools;
 use crate::assign::assign;
 use crate::astar::find_solutions;
 use crate::prelude::*;
+use crate::util::unwrap_or_idx;
 
-pub fn get_spellings(input: &MusicInput) -> (Vec<Vec<Harp>>, usize) {
+pub fn get_spellings(
+    input: &MusicInput,
+) -> Result<(Vec<Vec<Harp>>, usize), Vec<usize>> {
     let start = input.diagram;
     let end = input.goal;
     let mid = input
         .music
         .iter()
         .map(|(preset, other)| assign(preset, other))
-        .collect::<Vec<Vec<Harp>>>();
-    let (solutions, cost) = find_solutions(start, &mid, end);
-    (
+        .collect::<Vec<Option<Vec<Harp>>>>();
+    let chords = unwrap_or_idx(&mid)?;
+    let (solutions, cost) = find_solutions(start, &chords, end);
+    Ok((
         solutions
             .into_iter()
             .map(|v| v.into_iter().map(|a| a.pedals).collect_vec())
             .collect_vec(),
         cost,
-    )
+    ))
 }
 
 // result is one longer than spelling, since it includes

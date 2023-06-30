@@ -67,10 +67,8 @@ fn assignment_builder(notes: &[PitchClass], used: &[Name]) -> Forest<Note> {
     forest
 }
 
-// Build a tree of all possible assignments of notes,
-// All terminal nodes represent a complete assignment.
-// Returns empty Forest if there are no possibilities.
-pub fn assign(preset: &[Note], notes: &[PitchClass]) -> Vec<Harp> {
+// List all possible assignments of notes.
+pub fn assign(preset: &[Note], notes: &[PitchClass]) -> Option<Vec<Harp>> {
     let mut sanitized = Vec::new();
     // 1, 6, 11 can only be accessed by one pedal
     for x in [1, 6, 11, 0, 2, 3, 4, 5, 7, 8, 9, 10] {
@@ -78,16 +76,21 @@ pub fn assign(preset: &[Note], notes: &[PitchClass]) -> Vec<Harp> {
             sanitized.push(x);
         }
     }
-    if notes.is_empty() {
+    let out = if notes.is_empty() {
         vec![update_harp([None; 7], notes_to_harp(preset))]
     } else {
-    unravel_paths(assignment_builder(
-        &sanitized,
-        &preset.iter().map(|n| n.name).collect_vec(),
-    ))
-    .iter()
-    .map(|v| notes_to_harp(v))
-    .map(|h| update_harp(h, notes_to_harp(preset)))
-    .collect_vec()
+        unravel_paths(assignment_builder(
+            &sanitized,
+            &preset.iter().map(|n| n.name).collect_vec(),
+        ))
+        .iter()
+        .map(|v| notes_to_harp(v))
+        .map(|h| update_harp(h, notes_to_harp(preset)))
+        .collect_vec()
+    };
+    if out.is_empty() && !notes.is_empty() {
+        None
+    } else {
+        Some(out)
     }
 }

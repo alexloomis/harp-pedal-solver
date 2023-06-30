@@ -5,9 +5,11 @@ use crate::{
     solve::{get_pedal_changes, get_spellings},
 };
 
-pub fn find_candidates(input: &MusicInput) -> Vec<Candidate> {
+pub fn find_candidates(
+    input: &MusicInput,
+) -> Result<Vec<Candidate>, Vec<usize>> {
     info!("Managing enharmonic spellings...");
-    let (spellings, cost) = get_spellings(input);
+    let (spellings, cost) = get_spellings(input)?;
     let average_cost = cost / input.music.len();
     let mut candidates: Vec<CandidateBuilder> =
         Vec::with_capacity(spellings.len());
@@ -37,5 +39,5 @@ pub fn find_candidates(input: &MusicInput) -> Vec<Candidate> {
             out.push(new)
         }
     }
-    out
+    Ok(out)
 }

@@ -24,6 +24,22 @@ pub fn unravel_paths<T: Copy>(forest: Forest<T>) -> Vec<Vec<T>> {
     out
 }
 
+pub fn unwrap_or_idx<T: Clone>(v: &[Option<T>]) -> Result<Vec<T>, Vec<usize>> {
+    let mut out = Vec::new();
+    let mut indicies = Vec::new();
+    for (idx, elem) in v.iter().enumerate() {
+        match elem {
+            Some(t) => out.push(t.clone()),
+            None => indicies.push(idx),
+        }
+    }
+    if indicies.is_empty() {
+        Ok(out)
+    } else {
+        Err(indicies)
+    }
+}
+
 // // If we expect grandchildren, kill barren children.
 // fn kill_barren_children<T>(forest: &mut Forest<T>) {
 //     for mut branch in forest.iter_mut() {

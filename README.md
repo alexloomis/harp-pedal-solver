@@ -1,7 +1,7 @@
 # harp-pedal-solver
 
 To do:
-- [ ] reject impossible music
+- [x] reject impossible music
 - [ ] accept docx files?
 - [~] gui input
 - [x] pdf output
