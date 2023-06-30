@@ -4,11 +4,11 @@ use itertools::Itertools;
 use nom::{
     branch::alt,
     character::complete::{
-        char, line_ending, multispace0, one_of, space0, space1,
+        char, line_ending, multispace0, multispace1, one_of, space0,
     },
     combinator::{all_consuming, map, opt, value},
     error::ParseError,
-    multi::{count, many1, separated_list1},
+    multi::{count, many0, separated_list1},
     sequence::{delimited, preceded},
     Finish, IResult,
 };
@@ -26,7 +26,7 @@ pub struct Parsed {
     pub end: Option<Harp>,
 }
 
-// Allow but don't require space before and after, excludes newlines.
+// Allow but don't require space before and after, includes newlines.
 fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(
     inner: F,
 ) -> impl FnMut(&'a str) -> IResult<&'a str, O, E>
@@ -70,7 +70,6 @@ fn diagram(s: &str) -> IResult<&str, Harp> {
     Ok((rem, harp))
 }
 
-// Accepts a pedal setting, returns the appropriate u8 representing it.
 fn rest(s: &str) -> IResult<&str, NoteRequest> {
     value(Rest, one_of("rR"))(s)
 }
@@ -120,10 +119,12 @@ fn note(s: &str) -> IResult<&str, Note> {
     ))
 }
 
+// A note that can be respelled
 fn any_note(s: &str) -> IResult<&str, NoteRequest> {
     map(note, Any)(s)
 }
 
+// A note that cannot be respelled
 fn this_note(s: &str) -> IResult<&str, NoteRequest> {
     map(preceded(char('*'), note), This)(s)
 }
@@ -135,7 +136,7 @@ fn note_request(s: &str) -> IResult<&str, NoteRequest> {
 // Accepts any number of note requests, delimited by any amount of space,
 // all on the same line. "b#\tc  d \t" -> (" \t", [B#, C, D])
 fn beat(s: &str) -> IResult<&str, Vec<NoteRequest>> {
-    separated_list1(many1(space1), note_request)(s)
+    delimited(char('['), many0(ws(note_request)), char(']'))(s)
 }
 
 pub type Measure = Vec<Vec<NoteRequest>>;
@@ -146,7 +147,7 @@ pub type Measure = Vec<Vec<NoteRequest>>;
 // \t
 // fb  | " -> ("  | ", [[B#, C, D], [Fb]])
 fn measure(s: &str) -> IResult<&str, Measure> {
-    separated_list1(newline, beat)(s)
+    separated_list1(multispace1, beat)(s)
 }
 
 fn music(s: &str) -> IResult<&str, Vec<Measure>> {
@@ -192,27 +193,28 @@ fn pre_parse(
 }
 
 // List of rest, this, and any, to list of (this, any)
-fn split_requests(requests: Vec<Measure>)
-    -> Vec<Vec<(Vec<Note>, Vec<PitchClass>)>> {
-        let mut out = Vec::with_capacity(requests.len());
-        for measure in requests {
-            let mut measure_contents = Vec::with_capacity(measure.len());
-            for beat in measure {
-                let mut this = Vec::with_capacity(beat.len());
-                let mut any = Vec::with_capacity(beat.len());
-                for req in beat {
-                    match req {
-                        This(n) => this.push(n),
-                        Any(n) => any.push(note_to_pc(n)),
-                        Rest => (),
-                    }
+fn split_requests(
+    requests: Vec<Measure>,
+) -> Vec<Vec<(Vec<Note>, Vec<PitchClass>)>> {
+    let mut out = Vec::with_capacity(requests.len());
+    for measure in requests {
+        let mut measure_contents = Vec::with_capacity(measure.len());
+        for beat in measure {
+            let mut this = Vec::with_capacity(beat.len());
+            let mut any = Vec::with_capacity(beat.len());
+            for req in beat {
+                match req {
+                    This(n) => this.push(n),
+                    Any(n) => any.push(note_to_pc(n)),
+                    Rest => (),
                 }
-                measure_contents.push((this, any));
             }
-            out.push(measure_contents);
+            measure_contents.push((this, any));
         }
-        out
+        out.push(measure_contents);
     }
+    out
+}
 
 pub fn parse(s: &str) -> Result<Parsed, String> {
     match pre_parse(s) {

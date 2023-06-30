@@ -1,20 +1,8 @@
-    $pedal diagram symbols: ^ flat, - natural, v sharp, ~ no preference
- $^-^|^-^^
-        Ab C Eb
-        Cb Eb Gb
-        D F Bb
-        Eb G C A |
-        Ab Fb Cb
-        G Eb Bb
-        Gb Eb A Bb
-        F D Ab C |
-        G E C
-        G Eb Bb
-        Gb D A
-        Fb Db Bb G |
-        Ab C Eb
-        Eb Cb Gb
-        Bb F D
-        D# Gb A C |
-        E G# B
-        vv-|-vv-
+$pedal diagram symbols: ^ flat, - natural, v sharp, ~ no preference
+$^-^|^-^^
+[Ab C Eb] [Cb Eb Gb] [D F Bb] [Eb G C A] |
+[Ab Fb Cb] [G Eb Bb] [Gb Eb A Bb] [F D Ab C] |
+[G E C] [G Eb Bb] [Gb D A] [Fb Db Bb G] |
+[Ab C Eb] [Eb Cb Gb] [Bb F D] [D# Gb A C] |
+[E G# B]
+vv-|-vv-
