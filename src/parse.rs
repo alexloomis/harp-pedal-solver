@@ -3,9 +3,7 @@ use crate::prelude::*;
 use itertools::Itertools;
 use nom::{
     branch::alt,
-    character::complete::{
-        char, line_ending, multispace0, multispace1, one_of, space0,
-    },
+    character::complete::{char, multispace0, multispace1, one_of},
     combinator::{all_consuming, map, opt, value},
     error::ParseError,
     multi::{count, many0, separated_list1},
@@ -34,12 +32,6 @@ where
     F: Fn(&'a str) -> IResult<&'a str, O, E>,
 {
     delimited(multispace0, inner, multispace0)
-}
-
-// matches whitespace containing a newline
-fn newline(s: &str) -> IResult<&str, ()> {
-    let (rem, _) = delimited(space0, line_ending, multispace0)(s)?;
-    Ok((rem, ()))
 }
 
 // Accepts a pedal setting, returns the appropriate u8 representing it.
