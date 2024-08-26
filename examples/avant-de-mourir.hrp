@@ -1,0 +1,31 @@
+^-^|^--^
+$ B
+[f a  c  f a c d c ]
+[f a  c  f a c d c ]
+[f a  c  f a c d c ]
+[f a  c  f a c d c ]
+[f ab  cb d  f  ab cb  d f ]
+[f  ab  cb d  f  ab  cb d f ]
+[g  bb  db e  g  bb  db e g ]
+[g  bb  db e  g  bb  db e g ] |
+$ C
+[f  a  c   f  a  c d c ]
+[f  ab  c   f  ab  c db c ]
+[e  g  c  e  g  c  db c ]
+[e  g  c  e  g  c  db c ]
+[f ab c f ab c db c]
+[e g c e g c db c]
+[f a  c f a  c  d  c ]
+[f a  c f a  c  d  c ] |
+$ D
+[f a c f a c d c ]
+[f a c f a c d c ]
+[f  ab  cb d  f  ab  cb d f ]
+[f  ab  cb d  f  ab  cb d f ]
+[g  bb  db e  g  bb  db e g ]
+[g bb  db e  g  bb  db e g ]
+[f  a  c f a c d c ]
+[f a  c f a c d c ]
+[e  g  c  e  g  c  d c ]
+[e  g  c  e  g  c  d c ]
+[f a c f ]
