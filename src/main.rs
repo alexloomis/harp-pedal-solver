@@ -3,7 +3,7 @@
 use harp_pedal_solver::candidate::find_candidates;
 use itertools::Itertools;
 use log::{debug, error, info, warn};
-use simple_logger::SimpleLogger;
+// use simple_logger::SimpleLogger;
 use std::fs;
 use std::path::PathBuf;
 use std::process::{Command, ExitCode};
@@ -22,11 +22,11 @@ fn main() -> ExitCode {
     //     x => x,
     // };
     let log_level = CONST.verbose.log_level_filter();
-    SimpleLogger::new()
-        .with_level(log_level)
-        .without_timestamps()
-        .init()
-        .unwrap();
+    // SimpleLogger::new()
+        // .with_level(log_level)
+        // .without_timestamps()
+        // .init()
+        // .unwrap();
     let output = CONST
         .output
         .clone()
