@@ -2,7 +2,8 @@
 use itertools::Itertools;
 
 use crate::assign::assign;
-use crate::astar::find_solutions;
+//use crate::astar::find_solutions;
+use crate::dynamic::find_solutions;
 use crate::prelude::*;
 use crate::util::unwrap_or_idx;
 

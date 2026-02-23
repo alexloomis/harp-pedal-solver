@@ -1,8 +1,8 @@
-use crate::astar::{AstarState, Change};
 use crate::cli::CONST;
+use crate::model::{Change, ModelState};
 use crate::prelude::*;
 
-pub fn astar_cost(state: AstarState, target: AstarState) -> usize {
+pub fn step_cost(state: ModelState, target: ModelState) -> usize {
     let mut out = 0;
     out += pedal_cost(state.last_left, target.last_left);
     out += pedal_cost(state.last_right, target.last_right);
@@ -14,7 +14,7 @@ pub fn astar_cost(state: AstarState, target: AstarState) -> usize {
     out
 }
 
-pub fn astar_heuristic(state: AstarState, target: Harp) -> usize {
+pub fn astar_heuristic(state: ModelState, target: Harp) -> usize {
     let mut out = 0;
     out += CONST.pedal_cost * num_changes(state.pedals, target, 0..=6);
     out += CONST.double_string_cost * num_same(target);
@@ -42,7 +42,7 @@ pub fn quick_change_cost(old: Option<Change>, new: Option<Change>) -> usize {
     out
 }
 
-pub fn early_change_cost(state: AstarState) -> usize {
+pub fn early_change_cost(state: ModelState) -> usize {
     let mut out = 0;
     for b in state.early {
         if b {
